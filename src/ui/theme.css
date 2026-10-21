@@ -1,0 +1,122 @@
+:root {
+  --font-system: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --tab-bar-height: 49px;
+
+  /* iOS light system colors */
+  --bg: #f2f2f7;            /* systemGroupedBackground */
+  --bg-elevated: #ffffff;   /* secondarySystemGroupedBackground */
+  --label: #000000;
+  --label-secondary: rgba(60, 60, 67, 0.6);
+  --label-tertiary: rgba(60, 60, 67, 0.3);
+  --separator: rgba(60, 60, 67, 0.29);
+  --fill: rgba(120, 120, 128, 0.2);
+  --tint: #007aff;
+  --red: #ff3b30;
+  --orange: #ff9500;
+  --green: #34c759;
+  --blue: #007aff;
+  --bar-bg: rgba(249, 249, 249, 0.94);
+
+  --radius: 10px;
+  --radius-card: 14px;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --bg-elevated: #1c1c1e;
+    --label: #ffffff;
+    --label-secondary: rgba(235, 235, 245, 0.6);
+    --label-tertiary: rgba(235, 235, 245, 0.3);
+    --separator: rgba(84, 84, 88, 0.6);
+    --fill: rgba(120, 120, 128, 0.36);
+    --tint: #0a84ff;
+    --red: #ff453a;
+    --orange: #ff9f0a;
+    --green: #30d158;
+    --blue: #0a84ff;
+    --bar-bg: rgba(22, 22, 22, 0.94);
+  }
+}
+
+/* Manual override: <html data-theme="light|dark"> */
+:root[data-theme='light'] { color-scheme: light; }
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #000000; --bg-elevated: #1c1c1e; --label: #ffffff;
+  --label-secondary: rgba(235, 235, 245, 0.6); --label-tertiary: rgba(235, 235, 245, 0.3);
+  --separator: rgba(84, 84, 88, 0.6); --fill: rgba(120, 120, 128, 0.36);
+  --tint: #0a84ff; --red: #ff453a; --orange: #ff9f0a; --green: #30d158; --blue: #0a84ff;
+  --bar-bg: rgba(22, 22, 22, 0.94);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root { height: 100%; margin: 0; }
+
+body {
+  font-family: var(--font-system);
+  font-size: 17px; /* iOS body */
+  line-height: 1.29;
+  letter-spacing: -0.41px;
+  background: var(--bg);
+  color: var(--label);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior-y: none;
+}
+
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+
+code, pre { font-family: var(--font-mono); font-size: 14px; }
+
+.app { display: flex; flex-direction: column; height: 100%; }
+
+.app-content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--safe-top) var(--safe-right) calc(var(--tab-bar-height) + var(--safe-bottom)) var(--safe-left);
+}
+
+.screen { padding: 0 16px 24px; }
+
+.large-title-header { display: flex; align-items: flex-end; justify-content: space-between; padding: 8px 0 8px; }
+.large-title {
+  font-size: 34px;
+  line-height: 41px;
+  font-weight: 700;
+  letter-spacing: 0.37px;
+  margin: 0;
+}
+
+.placeholder { color: var(--label-secondary); padding: 24px 0; text-align: center; }
+
+.tab-bar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  display: flex;
+  height: calc(var(--tab-bar-height) + var(--safe-bottom));
+  padding: 0 var(--safe-right) var(--safe-bottom) var(--safe-left);
+  background: var(--bar-bg);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-top: 0.5px solid var(--separator);
+  z-index: 10;
+}
+.tab-bar-item {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  color: var(--label-secondary);
+}
+.tab-bar-item.active { color: var(--tint); }
+.tab-bar-icon { font-size: 22px; line-height: 1; }
+.tab-bar-label { font-size: 10px; font-weight: 500; letter-spacing: 0.1px; }
