@@ -473,3 +473,17 @@ code, pre { font-family: var(--font-mono); font-size: 14px; }
 @media (min-width: 720px) {
   .screen-body { max-width: 720px; margin: 0 auto; }
 }
+
+/*
+ * Review card gestures. Any scroll container (e.g. a code block with overflow-x:auto) resets the
+ * effective touch-action for touches that start inside it, so the browser took over the gesture
+ * (pointercancel) and a rightward pan at scrollLeft 0 overscrolled into the browser's back gesture.
+ * Inside the review card, code/tables wrap instead of scrolling, and every descendant inherits the
+ * card body's touch-action.
+ */
+.review-card-body * { touch-action: inherit; }
+.review-card .markdown pre code.hljs { overflow-x: visible; white-space: pre-wrap; overflow-wrap: anywhere; }
+.review-card .markdown table { display: table; overflow: visible; }
+/* Horizontal scrollers elsewhere must never chain overscroll into browser history navigation. */
+.markdown pre code.hljs, .markdown table, .chip-row { overscroll-behavior-x: contain; }
+.app-content, .sheet-body { overscroll-behavior-x: none; }
