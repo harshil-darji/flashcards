@@ -59,8 +59,19 @@ export interface Settings {
   theme: ThemePreference;
   /** Hour (0–23) at which a new study day starts. */
   dayStartHour: number;
-  /** Set true after seed decks were imported once. */
+  /** Set true after seed decks were imported once (legacy flag; see seedVersions). */
   seeded: boolean;
+  /** Per seed file (e.g. "./leetcode.json"): content version last imported. Missing on installs from before seed versioning. */
+  seedVersions?: Record<string, SeedFileRecord>;
+}
+
+/** What loadSeed last imported from one seed file. */
+export interface SeedFileRecord {
+  /** Content hash of the whole file. A different hash means the file was added or changed. */
+  hash: string;
+  /** Card id → content hash (front/back/deck/tags) as last imported; detects user edits so they are not overwritten. */
+  cards: Record<ID, string>;
+  importedAt: Timestamp;
 }
 
 export const DEFAULT_SETTINGS: Settings = {

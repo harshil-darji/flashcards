@@ -9,6 +9,7 @@ import ReviewScreen from './screens/ReviewScreen';
 import SearchScreen from './screens/SearchScreen';
 import StatsScreen from './screens/StatsScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import { SyncAgent } from './components/SyncAgent';
 
 function Shell() {
   const { error, cards, limits } = useStore();
@@ -65,6 +66,7 @@ function Shell() {
 export default function App() {
   return (
     <StoreProvider>
+      <SyncAgent />
       <Shell />
     </StoreProvider>
   );

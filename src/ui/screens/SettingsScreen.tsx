@@ -9,6 +9,8 @@ import { ListSection } from '../components/ListSection';
 import { ListRow } from '../components/ListRow';
 import { SegmentedControl } from '../components/SegmentedControl';
 import { Stepper } from '../components/Stepper';
+import { SyncSection } from '../components/SyncSection';
+import { useSyncStatus } from '../components/SyncAgent';
 
 type ImportReport = { file: string; added: number; updated: number; decks: number; errors: ParseError[] } | { file: string; fatal: string };
 
@@ -21,6 +23,7 @@ export default function SettingsScreen() {
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const syncOn = useSyncStatus().state !== 'disconnected';
 
   useEffect(() => setRetention(settings.requestRetention), [settings.requestRetention]);
   useEffect(() => {
@@ -57,6 +60,8 @@ export default function SettingsScreen() {
   return (
     <Page title="Settings">
       {error && <div className="form-error">{error}</div>}
+      <SyncSection />
+
       <ListSection header="Appearance">
         <div className="list-row">
           <SegmentedControl<ThemePreference>
@@ -131,7 +136,7 @@ export default function SettingsScreen() {
       <ListSection header="About">
         <ListRow title="Decks" detail={decks.length} />
         <ListRow title="Cards" detail={cards.length} />
-        <ListRow title="Storage" detail="On this device" />
+        <ListRow title="Storage" detail={syncOn ? 'This device + GitHub gist' : 'On this device'} />
       </ListSection>
     </Page>
   );
