@@ -1,0 +1,806 @@
+{
+  "version": 1,
+  "cards": [
+    {
+      "front": "When do I reach for **Arrays & Hashing** (HashMap / HashSet)?",
+      "back": "- \"Contains duplicate\", \"seen before\", \"first unique\"\n- Counting / frequency / anagrams / grouping\n- Need a **complement** in O(1) (`target - x`)\n- Subarray sum equals k → **prefix sum + map**\n- Brute force is O(n²) pair checks → trade space for time",
+      "deck": "LeetCode::Arrays & Hashing",
+      "tags": [
+        "arrays-hashing",
+        "trigger"
+      ]
+    },
+    {
+      "front": "Java template: one-pass HashMap lookup (Two Sum)",
+      "back": "```java\nint[] twoSum(int[] nums, int target) {\n    Map<Integer, Integer> seen = new HashMap<>(); // value -> index\n    for (int i = 0; i < nums.length; i++) {\n        Integer j = seen.get(target - nums[i]);\n        if (j != null) return new int[]{j, i};\n        seen.put(nums[i], i);\n    }\n    return new int[0];\n}\n```\n\nFrequency count: `cnt.merge(x, 1, Integer::sum)`",
+      "deck": "LeetCode::Arrays & Hashing",
+      "tags": [
+        "arrays-hashing",
+        "template"
+      ]
+    },
+    {
+      "front": "Arrays & Hashing: complexity + common pitfalls",
+      "back": "**Complexity:** O(n) time, O(n) space (avg-case hashing).\n\n**Pitfalls**\n- Comparing `Integer` with `==` (cache only covers -128..127) → use `.equals` or unbox\n- Insert *after* checking, or you match an element with itself\n- Sorting each word for an anagram key costs O(k log k); `int[26]` count key is O(k)\n- Arrays as map keys hash by identity → convert to `String` / `List`",
+      "deck": "LeetCode::Arrays & Hashing",
+      "tags": [
+        "arrays-hashing",
+        "pitfall"
+      ]
+    },
+    {
+      "front": "Group Anagrams → ?",
+      "back": "**Pattern:** HashMap from canonical key → list of words.\n\n- Key = sorted chars, or 26-count signature (`Arrays.toString(cnt)`)\n- `map.computeIfAbsent(key, k -> new ArrayList<>()).add(word)`\n- O(n·k) with count key",
+      "deck": "LeetCode::Arrays & Hashing",
+      "tags": [
+        "arrays-hashing",
+        "problem"
+      ]
+    },
+    {
+      "front": "Longest Consecutive Sequence → ?",
+      "back": "**Pattern:** HashSet + only start counting at sequence heads.\n\n- Put all nums in a set\n- For each x where `x - 1` is **not** in the set, walk x+1, x+2, …\n- Each number visited at most twice → O(n)",
+      "deck": "LeetCode::Arrays & Hashing",
+      "tags": [
+        "arrays-hashing",
+        "problem"
+      ]
+    },
+    {
+      "front": "When do I reach for **Two Pointers**?",
+      "back": "- Input is **sorted** (or you can sort it)\n- Find a pair / triplet with a target sum\n- Palindrome checks, reversing in place\n- Remove duplicates / partition **in place**, O(1) extra space\n- Compare from both ends and move the \"worse\" side",
+      "deck": "LeetCode::Two Pointers",
+      "tags": [
+        "two-pointers",
+        "trigger"
+      ]
+    },
+    {
+      "front": "Java template: converging two pointers on a sorted array",
+      "back": "```java\nboolean hasPairWithSum(int[] a, int target) { // a is sorted\n    int l = 0, r = a.length - 1;\n    while (l < r) {\n        int s = a[l] + a[r];\n        if (s == target) return true;\n        if (s < target) l++;\n        else r--;\n    }\n    return false;\n}\n```",
+      "deck": "LeetCode::Two Pointers",
+      "tags": [
+        "two-pointers",
+        "template"
+      ]
+    },
+    {
+      "front": "Two Pointers: complexity + common pitfalls",
+      "back": "**Complexity:** O(n) scan (+ O(n log n) if you sort), O(1) space.\n\n**Pitfalls**\n- `l < r` vs `l <= r` — decide if one element may pair with itself\n- 3Sum: skip duplicates for `i` **and** after a match for `l`/`r`\n- Sorting destroys original indices (Two Sum wants indices → use hashing)\n- Sum overflow on large ints → use `long`",
+      "deck": "LeetCode::Two Pointers",
+      "tags": [
+        "two-pointers",
+        "pitfall"
+      ]
+    },
+    {
+      "front": "3Sum → ?",
+      "back": "**Pattern:** sort + fix one + two pointers.\n\n- Sort; for each `i` (skip if `nums[i] == nums[i-1]`)\n- Two pointers on `i+1..n-1` for `-nums[i]`\n- On match, move both and skip equal neighbors\n- O(n²) time",
+      "deck": "LeetCode::Two Pointers",
+      "tags": [
+        "two-pointers",
+        "problem"
+      ]
+    },
+    {
+      "front": "Container With Most Water → ?",
+      "back": "**Pattern:** converging two pointers, move the shorter wall.\n\n- Area = `min(h[l], h[r]) * (r - l)`\n- Moving the taller wall can never help (width shrinks, height capped)\n- O(n)",
+      "deck": "LeetCode::Two Pointers",
+      "tags": [
+        "two-pointers",
+        "problem"
+      ]
+    },
+    {
+      "front": "When do I reach for **Sliding Window**?",
+      "back": "- **Contiguous** subarray / substring\n- \"Longest / shortest / count windows such that…\"\n- \"At most k distinct\", \"no repeating\", \"contains all of t\"\n- Fixed window size k (moving average, max sum of k)\n- Constraint is monotonic: growing the window only makes it \"more invalid\"",
+      "deck": "LeetCode::Sliding Window",
+      "tags": [
+        "sliding-window",
+        "trigger"
+      ]
+    },
+    {
+      "front": "Java template: variable-size sliding window",
+      "back": "```java\n// Longest subarray with sum <= k (all a[i] >= 0)\nint longestWindow(int[] a, int k) {\n    int l = 0, sum = 0, best = 0;\n    for (int r = 0; r < a.length; r++) {\n        sum += a[r];                 // expand\n        while (sum > k) sum -= a[l++]; // shrink until valid\n        best = Math.max(best, r - l + 1);\n    }\n    return best;\n}\n```",
+      "deck": "LeetCode::Sliding Window",
+      "tags": [
+        "sliding-window",
+        "template"
+      ]
+    },
+    {
+      "front": "Sliding Window: complexity + common pitfalls",
+      "back": "**Complexity:** O(n) — each index enters and leaves once. Space O(alphabet) for counts.\n\n**Pitfalls**\n- **Negative numbers** break shrink logic → use prefix sum + HashMap instead\n- With a last-seen map, `l = max(l, last + 1)` — never move `l` backwards\n- Shortest-window problems: record the answer **inside** the shrink loop\n- \"Exactly k\" = atMost(k) − atMost(k − 1)",
+      "deck": "LeetCode::Sliding Window",
+      "tags": [
+        "sliding-window",
+        "pitfall"
+      ]
+    },
+    {
+      "front": "Longest Substring Without Repeating Characters → ?",
+      "back": "**Pattern:** variable sliding window + last-seen index map.\n\n```java\nint lengthOfLongestSubstring(String s) {\n    Map<Character, Integer> last = new HashMap<>();\n    int best = 0;\n    for (int l = 0, r = 0; r < s.length(); r++) {\n        char c = s.charAt(r);\n        if (last.containsKey(c)) l = Math.max(l, last.get(c) + 1);\n        last.put(c, r);\n        best = Math.max(best, r - l + 1);\n    }\n    return best;\n}\n```",
+      "deck": "LeetCode::Sliding Window",
+      "tags": [
+        "sliding-window",
+        "problem"
+      ]
+    },
+    {
+      "front": "Minimum Window Substring → ?",
+      "back": "**Pattern:** sliding window with need-counts.\n\n- Count chars of `t`; track `missing` = t.length()\n- Expand `r`; when `missing == 0`, shrink `l` while still valid\n- Record best window **while shrinking**\n- O(|s| + |t|)",
+      "deck": "LeetCode::Sliding Window",
+      "tags": [
+        "sliding-window",
+        "problem"
+      ]
+    },
+    {
+      "front": "When do I reach for a **Stack**?",
+      "back": "- Matching / nested structure: brackets, tags, decode `3[a2[c]]`\n- \"Next greater / smaller element\", \"days until warmer\" → **monotonic stack**\n- Evaluate expressions (RPN, calculator)\n- Undo / most-recent-first processing\n- Largest rectangle in histogram",
+      "deck": "LeetCode::Stack",
+      "tags": [
+        "stack",
+        "trigger"
+      ]
+    },
+    {
+      "front": "Java template: monotonic stack (next greater element)",
+      "back": "```java\nint[] nextGreater(int[] a) {\n    int[] res = new int[a.length];\n    Arrays.fill(res, -1);\n    Deque<Integer> st = new ArrayDeque<>(); // indices; values decreasing\n    for (int i = 0; i < a.length; i++) {\n        while (!st.isEmpty() && a[st.peek()] < a[i]) {\n            res[st.pop()] = a[i];\n        }\n        st.push(i);\n    }\n    return res;\n}\n```",
+      "deck": "LeetCode::Stack",
+      "tags": [
+        "stack",
+        "template"
+      ]
+    },
+    {
+      "front": "Stack: complexity + common pitfalls",
+      "back": "**Complexity:** O(n) amortized — each element pushed/popped once.\n\n**Pitfalls**\n- Use `ArrayDeque` (`push/pop/peek`), not legacy `Stack`\n- Store **indices**, not values, when you need distances/widths\n- Check `isEmpty()` before `pop()`/`peek()`\n- Histogram: push a sentinel 0 at the end to flush the stack",
+      "deck": "LeetCode::Stack",
+      "tags": [
+        "stack",
+        "pitfall"
+      ]
+    },
+    {
+      "front": "Daily Temperatures → ?",
+      "back": "**Pattern:** monotonic decreasing stack of indices.\n\n- While today is warmer than `temps[st.peek()]`: `j = pop()`, `ans[j] = i - j`\n- Push `i`\n- O(n)",
+      "deck": "LeetCode::Stack",
+      "tags": [
+        "stack",
+        "problem"
+      ]
+    },
+    {
+      "front": "Valid Parentheses → ?",
+      "back": "**Pattern:** stack of expected closers.\n\n- On `(`/`[`/`{` push the matching closer\n- On a closer: stack empty or `pop() != c` → false\n- Valid iff stack empty at end",
+      "deck": "LeetCode::Stack",
+      "tags": [
+        "stack",
+        "problem"
+      ]
+    },
+    {
+      "front": "When do I reach for **Binary Search**?",
+      "back": "- Sorted or **rotated** sorted array\n- Required O(log n)\n- \"Minimum x such that…\" / \"maximum x such that…\" → **search on the answer**\n- A **monotonic predicate** exists: false…false true…true\n- Huge answer range (speeds, capacities, days)",
+      "deck": "LeetCode::Binary Search",
+      "tags": [
+        "binary-search",
+        "trigger"
+      ]
+    },
+    {
+      "front": "Java template: first index where predicate is true",
+      "back": "```java\n// Smallest i in [lo, hi) with ok(i) true; returns hi if none.\nint firstTrue(int lo, int hi, IntPredicate ok) {\n    while (lo < hi) {\n        int mid = lo + (hi - lo) / 2;\n        if (ok.test(mid)) hi = mid;\n        else lo = mid + 1;\n    }\n    return lo;\n}\n// lower bound: firstTrue(0, a.length, i -> a[i] >= x)\n```\n\nImport: `java.util.function.IntPredicate`",
+      "deck": "LeetCode::Binary Search",
+      "tags": [
+        "binary-search",
+        "template"
+      ]
+    },
+    {
+      "front": "Binary Search: complexity + common pitfalls",
+      "back": "**Complexity:** O(log n) iterations × cost of predicate.\n\n**Pitfalls**\n- `(lo + hi) / 2` overflows → `lo + (hi - lo) / 2`\n- `lo = mid` with `mid` rounding down → infinite loop\n- Mixing inclusive `[lo, hi]` and half-open `[lo, hi)` bounds\n- Search-on-answer: get the range right (min possible, max possible)",
+      "deck": "LeetCode::Binary Search",
+      "tags": [
+        "binary-search",
+        "pitfall"
+      ]
+    },
+    {
+      "front": "Koko Eating Bananas → ?",
+      "back": "**Pattern:** binary search on the answer.\n\n- Speed k ∈ [1, max(piles)]\n- `ok(k)`: Σ ceil(p / k) ≤ h  → `(p + k - 1) / k`\n- Find first k with ok(k) true\n- O(n log max)",
+      "deck": "LeetCode::Binary Search",
+      "tags": [
+        "binary-search",
+        "problem"
+      ]
+    },
+    {
+      "front": "Find Minimum in Rotated Sorted Array → ?",
+      "back": "**Pattern:** binary search comparing `mid` to the **right end**.\n\n- If `a[mid] > a[hi]` → min is right of mid: `lo = mid + 1`\n- Else → `hi = mid`\n- Return `a[lo]`; O(log n)",
+      "deck": "LeetCode::Binary Search",
+      "tags": [
+        "binary-search",
+        "problem"
+      ]
+    },
+    {
+      "front": "When do I reach for **Linked List** techniques?",
+      "back": "- Reverse all / part of a list, reorder in place\n- Detect a cycle, find cycle start → **fast & slow pointers**\n- Find middle / kth from end → two pointers with a gap\n- Merge sorted lists → **dummy head**\n- LRU cache → doubly linked list + HashMap",
+      "deck": "LeetCode::Linked List",
+      "tags": [
+        "linked-list",
+        "trigger"
+      ]
+    },
+    {
+      "front": "Java template: reverse a list + find middle",
+      "back": "```java\nListNode reverse(ListNode head) {\n    ListNode prev = null, cur = head;\n    while (cur != null) {\n        ListNode next = cur.next;\n        cur.next = prev;\n        prev = cur;\n        cur = next;\n    }\n    return prev;\n}\n\nListNode middle(ListNode head) {\n    ListNode slow = head, fast = head;\n    while (fast != null && fast.next != null) {\n        slow = slow.next;\n        fast = fast.next.next;\n    }\n    return slow;\n}\n```",
+      "deck": "LeetCode::Linked List",
+      "tags": [
+        "linked-list",
+        "template"
+      ]
+    },
+    {
+      "front": "Linked List: complexity + common pitfalls",
+      "back": "**Complexity:** O(n) time, O(1) extra space for pointer tricks.\n\n**Pitfalls**\n- Save `next` before rewiring, or you lose the rest of the list\n- Fast/slow loop guard: `fast != null && fast.next != null`\n- Use a `dummy` node when the head may change (merge, remove)\n- Remember to cut lists (`mid.next = null`) before reversing halves",
+      "deck": "LeetCode::Linked List",
+      "tags": [
+        "linked-list",
+        "pitfall"
+      ]
+    },
+    {
+      "front": "Linked List Cycle (II: find start) → ?",
+      "back": "**Pattern:** Floyd's fast & slow pointers.\n\n- Move slow 1, fast 2; meeting ⇒ cycle\n- To find start: reset one pointer to head, move both by 1; they meet at the entry\n- O(n) time, O(1) space",
+      "deck": "LeetCode::Linked List",
+      "tags": [
+        "linked-list",
+        "problem"
+      ]
+    },
+    {
+      "front": "Reorder List (L0→Ln→L1→Ln-1…) → ?",
+      "back": "**Pattern:** middle + reverse + merge.\n\n1. Find middle with fast/slow\n2. Reverse the second half (cut first!)\n3. Alternate-merge the two halves\n- O(n), O(1) space",
+      "deck": "LeetCode::Linked List",
+      "tags": [
+        "linked-list",
+        "problem"
+      ]
+    },
+    {
+      "front": "When do I reach for **Tree DFS vs BFS**?",
+      "back": "- Height, diameter, path sums, subtree properties → **DFS** returning a value\n- Level by level, right-side view, min depth → **BFS** with a queue\n- BST: sorted order → **inorder** traversal; search by comparing values\n- LCA, serialize/deserialize, build from traversals",
+      "deck": "LeetCode::Trees",
+      "tags": [
+        "trees",
+        "trigger"
+      ]
+    },
+    {
+      "front": "Java template: recursive DFS + level-order BFS",
+      "back": "```java\nint maxDepth(TreeNode root) {\n    if (root == null) return 0;\n    return 1 + Math.max(maxDepth(root.left), maxDepth(root.right));\n}\n\nList<List<Integer>> levelOrder(TreeNode root) {\n    List<List<Integer>> res = new ArrayList<>();\n    Deque<TreeNode> q = new ArrayDeque<>();\n    if (root != null) q.offer(root);\n    while (!q.isEmpty()) {\n        List<Integer> level = new ArrayList<>();\n        for (int n = q.size(); n > 0; n--) {\n            TreeNode node = q.poll();\n            level.add(node.val);\n            if (node.left != null) q.offer(node.left);\n            if (node.right != null) q.offer(node.right);\n        }\n        res.add(level);\n    }\n    return res;\n}\n```",
+      "deck": "LeetCode::Trees",
+      "tags": [
+        "trees",
+        "template"
+      ]
+    },
+    {
+      "front": "Trees: complexity + common pitfalls",
+      "back": "**Complexity:** O(n) time; O(h) recursion stack (h = n if skewed), BFS O(width).\n\n**Pitfalls**\n- `ArrayDeque` rejects `null` → check children before `offer`\n- Validate BST with **(low, high) bounds**, not just parent vs child\n- Use `long` bounds (node values can be `Integer.MIN/MAX_VALUE`)\n- Snapshot `q.size()` before the level loop",
+      "deck": "LeetCode::Trees",
+      "tags": [
+        "trees",
+        "pitfall"
+      ]
+    },
+    {
+      "front": "Validate Binary Search Tree → ?",
+      "back": "**Pattern:** DFS with valid range.\n\n- `valid(node, lo, hi)`: null → true; `lo < val < hi` and recurse\n- Left gets `(lo, val)`, right gets `(val, hi)`\n- Start with `Long.MIN_VALUE, Long.MAX_VALUE`\n- Alt: inorder must be strictly increasing",
+      "deck": "LeetCode::Trees",
+      "tags": [
+        "trees",
+        "problem"
+      ]
+    },
+    {
+      "front": "Binary Tree Maximum Path Sum → ?",
+      "back": "**Pattern:** post-order DFS returning best **single-branch** gain.\n\n- `gain(node) = val + max(0, gainL, gainR)`\n- Update global `best = max(best, val + max(0,gainL) + max(0,gainR))`\n- O(n)",
+      "deck": "LeetCode::Trees",
+      "tags": [
+        "trees",
+        "problem"
+      ]
+    },
+    {
+      "front": "When do I reach for a **Trie**?",
+      "back": "- Prefix queries: `startsWith`, autocomplete, \"words with prefix\"\n- Search **many words at once** (e.g. in a grid)\n- Wildcard search (`.` matches any letter)\n- Longest common prefix, XOR-max (binary trie)",
+      "deck": "LeetCode::Tries",
+      "tags": [
+        "tries",
+        "trigger"
+      ]
+    },
+    {
+      "front": "Java template: Trie (insert / search / startsWith)",
+      "back": "```java\nclass Trie {\n    private final Trie[] next = new Trie[26];\n    private boolean end;\n\n    void insert(String w) {\n        Trie t = this;\n        for (char c : w.toCharArray()) {\n            if (t.next[c - 'a'] == null) t.next[c - 'a'] = new Trie();\n            t = t.next[c - 'a'];\n        }\n        t.end = true;\n    }\n\n    boolean search(String w, boolean prefixOnly) {\n        Trie t = this;\n        for (char c : w.toCharArray()) {\n            t = t.next[c - 'a'];\n            if (t == null) return false;\n        }\n        return prefixOnly || t.end;\n    }\n}\n```",
+      "deck": "LeetCode::Tries",
+      "tags": [
+        "tries",
+        "template"
+      ]
+    },
+    {
+      "front": "Tries: complexity + common pitfalls",
+      "back": "**Complexity:** O(L) per insert/search; space O(total chars × 26).\n\n**Pitfalls**\n- Forgetting the `end` flag → prefixes count as words\n- `c - 'a'` assumes lowercase a–z; use a `HashMap` child map otherwise\n- Word Search II: clear found words / prune empty nodes to avoid TLE\n- Wildcard `.` needs DFS over all 26 children",
+      "deck": "LeetCode::Tries",
+      "tags": [
+        "tries",
+        "pitfall"
+      ]
+    },
+    {
+      "front": "Word Search II → ?",
+      "back": "**Pattern:** Trie of all words + grid DFS/backtracking.\n\n- Build trie; store the full word at its end node\n- DFS from each cell following trie children; mark visited (`'#'`)\n- On reaching a word node: add it, then null it out (dedupe)\n- Prune: much faster than searching each word separately",
+      "deck": "LeetCode::Tries",
+      "tags": [
+        "tries",
+        "problem"
+      ]
+    },
+    {
+      "front": "When do I reach for a **Heap / Priority Queue**?",
+      "back": "- \"Top k\", \"k largest / smallest / closest / most frequent\"\n- \"Kth largest\" in a stream\n- Merge k sorted lists / arrays\n- Running **median** → two heaps\n- Always process the next-smallest/earliest item (scheduling, Dijkstra)",
+      "deck": "LeetCode::Heap / Priority Queue",
+      "tags": [
+        "heap",
+        "trigger"
+      ]
+    },
+    {
+      "front": "Java template: k largest with a size-k min-heap",
+      "back": "```java\nint[] kLargest(int[] nums, int k) {\n    PriorityQueue<Integer> pq = new PriorityQueue<>(); // min-heap\n    for (int x : nums) {\n        pq.offer(x);\n        if (pq.size() > k) pq.poll(); // drop the smallest\n    }\n    int[] res = new int[pq.size()];\n    for (int i = 0; i < res.length; i++) res[i] = pq.poll();\n    return res;\n}\n// max-heap: new PriorityQueue<>(Collections.reverseOrder())\n```",
+      "deck": "LeetCode::Heap / Priority Queue",
+      "tags": [
+        "heap",
+        "template"
+      ]
+    },
+    {
+      "front": "Heap: complexity + common pitfalls",
+      "back": "**Complexity:** offer/poll O(log n), peek O(1); top-k in O(n log k), heapify O(n).\n\n**Pitfalls**\n- Java's `PriorityQueue` is a **min-heap** by default\n- Comparator `(a, b) -> b - a` can overflow → `Integer.compare(b, a)`\n- Iterating a PQ is **not** sorted order — poll to get order\n- Top-k frequent can be O(n) with bucket sort",
+      "deck": "LeetCode::Heap / Priority Queue",
+      "tags": [
+        "heap",
+        "pitfall"
+      ]
+    },
+    {
+      "front": "Find Median from Data Stream → ?",
+      "back": "**Pattern:** two heaps.\n\n- `lo` = max-heap (smaller half), `hi` = min-heap (larger half)\n- Add to `lo`, move `lo.poll()` to `hi`; if `hi` bigger, move back\n- Median = `lo.peek()` or average of both tops\n- O(log n) add, O(1) median",
+      "deck": "LeetCode::Heap / Priority Queue",
+      "tags": [
+        "heap",
+        "problem"
+      ]
+    },
+    {
+      "front": "Merge K Sorted Lists → ?",
+      "back": "**Pattern:** min-heap of current heads.\n\n- Push each non-null head; comparator on `node.val`\n- Poll min, append to dummy tail, push its `next`\n- O(N log k)",
+      "deck": "LeetCode::Heap / Priority Queue",
+      "tags": [
+        "heap",
+        "problem"
+      ]
+    },
+    {
+      "front": "When do I reach for **Backtracking**?",
+      "back": "- \"Return **all** subsets / permutations / combinations / partitions\"\n- Constraint puzzles: N-Queens, Sudoku, word search in grid\n- Small n (≈ ≤ 20) — exponential is acceptable\n- Choose → explore → un-choose",
+      "deck": "LeetCode::Backtracking",
+      "tags": [
+        "backtracking",
+        "trigger"
+      ]
+    },
+    {
+      "front": "Java template: subsets via choose / explore / un-choose",
+      "back": "```java\nList<List<Integer>> subsets(int[] nums) {\n    List<List<Integer>> res = new ArrayList<>();\n    backtrack(nums, 0, new ArrayList<>(), res);\n    return res;\n}\n\nvoid backtrack(int[] nums, int start, List<Integer> path, List<List<Integer>> res) {\n    res.add(new ArrayList<>(path));       // record a copy\n    for (int i = start; i < nums.length; i++) {\n        path.add(nums[i]);                // choose\n        backtrack(nums, i + 1, path, res); // explore\n        path.remove(path.size() - 1);     // un-choose\n    }\n}\n```",
+      "deck": "LeetCode::Backtracking",
+      "tags": [
+        "backtracking",
+        "template"
+      ]
+    },
+    {
+      "front": "Backtracking: complexity + common pitfalls",
+      "back": "**Complexity:** subsets O(n·2ⁿ), permutations O(n·n!).\n\n**Pitfalls**\n- Add a **copy** of `path`, not `path` itself\n- Duplicates: sort, then skip `i > start && nums[i] == nums[i-1]`\n- Reuse allowed (Combination Sum) → recurse with `i`, not `i + 1`\n- Prune early (sum > target → break when sorted)\n- Grid search: restore the cell after exploring",
+      "deck": "LeetCode::Backtracking",
+      "tags": [
+        "backtracking",
+        "pitfall"
+      ]
+    },
+    {
+      "front": "Combination Sum → ?",
+      "back": "**Pattern:** backtracking with reuse.\n\n- Sort candidates; `dfs(start, remaining)`\n- For `i ≥ start`: if `c[i] > remaining` break; choose, `dfs(i, remaining - c[i])`, un-choose\n- `remaining == 0` → record copy",
+      "deck": "LeetCode::Backtracking",
+      "tags": [
+        "backtracking",
+        "problem"
+      ]
+    },
+    {
+      "front": "N-Queens → ?",
+      "back": "**Pattern:** row-by-row backtracking with conflict sets.\n\n- Track used `cols`, `diag = r - c`, `anti = r + c`\n- Place a queen in each safe column of row r, recurse r+1, then remove\n- O(n!) worst case",
+      "deck": "LeetCode::Backtracking",
+      "tags": [
+        "backtracking",
+        "problem"
+      ]
+    },
+    {
+      "front": "When do I reach for **Graph BFS / DFS / Topo sort**?",
+      "back": "- Grid of cells: islands, regions, flood fill → **DFS/BFS**\n- Shortest path in **unweighted** graph / \"minimum steps\" → **BFS**\n- Spreading from many sources at once (rotting oranges) → **multi-source BFS**\n- Prerequisites / ordering / dependency cycle → **topological sort**\n- Connected components / redundant edge → **DFS or Union-Find**",
+      "deck": "LeetCode::Graphs",
+      "tags": [
+        "graphs",
+        "trigger"
+      ]
+    },
+    {
+      "front": "Java template: grid DFS (Number of Islands)",
+      "back": "```java\nint numIslands(char[][] g) {\n    int count = 0;\n    for (int r = 0; r < g.length; r++)\n        for (int c = 0; c < g[0].length; c++)\n            if (g[r][c] == '1') { count++; sink(g, r, c); }\n    return count;\n}\n\nvoid sink(char[][] g, int r, int c) {\n    if (r < 0 || c < 0 || r >= g.length || c >= g[0].length || g[r][c] != '1') return;\n    g[r][c] = '0'; // mark visited\n    sink(g, r + 1, c); sink(g, r - 1, c);\n    sink(g, r, c + 1); sink(g, r, c - 1);\n}\n```",
+      "deck": "LeetCode::Graphs",
+      "tags": [
+        "graphs",
+        "template"
+      ]
+    },
+    {
+      "front": "Java template: topological sort (Kahn's BFS)",
+      "back": "```java\nboolean canFinish(int n, int[][] prereqs) { // p = {course, pre}\n    List<List<Integer>> adj = new ArrayList<>();\n    for (int i = 0; i < n; i++) adj.add(new ArrayList<>());\n    int[] indeg = new int[n];\n    for (int[] p : prereqs) { adj.get(p[1]).add(p[0]); indeg[p[0]]++; }\n    Deque<Integer> q = new ArrayDeque<>();\n    for (int i = 0; i < n; i++) if (indeg[i] == 0) q.offer(i);\n    int done = 0;\n    while (!q.isEmpty()) {\n        int u = q.poll();\n        done++;\n        for (int v : adj.get(u)) if (--indeg[v] == 0) q.offer(v);\n    }\n    return done == n; // false => cycle\n}\n```",
+      "deck": "LeetCode::Graphs",
+      "tags": [
+        "graphs",
+        "template"
+      ]
+    },
+    {
+      "front": "Graphs: complexity + common pitfalls",
+      "back": "**Complexity:** O(V + E); grids O(rows × cols).\n\n**Pitfalls**\n- BFS: mark visited when **enqueuing**, not when polling (avoids duplicates)\n- Deep recursion on big grids → StackOverflow; switch to iterative BFS\n- Directed cycle detection needs 3 states (unvisited / visiting / done)\n- Edge direction in prereq pairs is easy to flip",
+      "deck": "LeetCode::Graphs",
+      "tags": [
+        "graphs",
+        "pitfall"
+      ]
+    },
+    {
+      "front": "Rotting Oranges → ?",
+      "back": "**Pattern:** multi-source BFS.\n\n- Enqueue **all** rotten cells at minute 0; count fresh\n- BFS level by level; each level = 1 minute; rot neighbors, decrement fresh\n- Answer = minutes if fresh == 0, else -1",
+      "deck": "LeetCode::Graphs",
+      "tags": [
+        "graphs",
+        "problem"
+      ]
+    },
+    {
+      "front": "When do I reach for **Advanced Graph** algorithms?",
+      "back": "- Weighted shortest path, **non-negative** weights → **Dijkstra**\n- Shortest path with ≤ k edges / negative weights → **Bellman-Ford**\n- Connect all points at min cost → **MST** (Prim or Kruskal + Union-Find)\n- Use every edge once (itinerary) → **Hierholzer / Eulerian path**\n- Dynamic connectivity, merging groups → **Union-Find**",
+      "deck": "LeetCode::Advanced Graphs",
+      "tags": [
+        "advanced-graphs",
+        "trigger"
+      ]
+    },
+    {
+      "front": "Java template: Dijkstra with a PriorityQueue",
+      "back": "```java\nint[] dijkstra(List<List<int[]>> adj, int src) { // adj.get(u) = {v, w}\n    int[] dist = new int[adj.size()];\n    Arrays.fill(dist, Integer.MAX_VALUE);\n    dist[src] = 0;\n    PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> Integer.compare(a[1], b[1]));\n    pq.offer(new int[]{src, 0});\n    while (!pq.isEmpty()) {\n        int[] cur = pq.poll();\n        int u = cur[0];\n        if (cur[1] > dist[u]) continue; // stale entry\n        for (int[] e : adj.get(u)) {\n            int nd = dist[u] + e[1];\n            if (nd < dist[e[0]]) {\n                dist[e[0]] = nd;\n                pq.offer(new int[]{e[0], nd});\n            }\n        }\n    }\n    return dist;\n}\n```",
+      "deck": "LeetCode::Advanced Graphs",
+      "tags": [
+        "advanced-graphs",
+        "template"
+      ]
+    },
+    {
+      "front": "Java template: Union-Find (path compression + union by size)",
+      "back": "```java\nclass DSU {\n    private final int[] parent, size;\n\n    DSU(int n) {\n        parent = new int[n];\n        size = new int[n];\n        for (int i = 0; i < n; i++) { parent[i] = i; size[i] = 1; }\n    }\n\n    int find(int x) {\n        return parent[x] == x ? x : (parent[x] = find(parent[x]));\n    }\n\n    boolean union(int a, int b) { // false if already connected\n        int ra = find(a), rb = find(b);\n        if (ra == rb) return false;\n        if (size[ra] < size[rb]) { int t = ra; ra = rb; rb = t; }\n        parent[rb] = ra;\n        size[ra] += size[rb];\n        return true;\n    }\n}\n```",
+      "deck": "LeetCode::Advanced Graphs",
+      "tags": [
+        "advanced-graphs",
+        "template"
+      ]
+    },
+    {
+      "front": "Advanced Graphs: complexity + common pitfalls",
+      "back": "**Complexity:** Dijkstra O(E log V); Bellman-Ford O(k·E); Kruskal O(E log E); DSU ≈ O(α(n)).\n\n**Pitfalls**\n- Dijkstra is wrong with **negative** weights\n- Skip stale PQ entries (`d > dist[u]`) or it degrades\n- `Integer.MAX_VALUE + w` overflows — only relax from reachable nodes\n- Bellman-Ford with k stops: relax from a **copy** of last round's dist",
+      "deck": "LeetCode::Advanced Graphs",
+      "tags": [
+        "advanced-graphs",
+        "pitfall"
+      ]
+    },
+    {
+      "front": "Network Delay Time → ?",
+      "back": "**Pattern:** Dijkstra from source k.\n\n- Build adjacency `u → {v, w}`\n- Run Dijkstra; answer = max(dist)\n- Any node still `MAX_VALUE` → return -1",
+      "deck": "LeetCode::Advanced Graphs",
+      "tags": [
+        "advanced-graphs",
+        "problem"
+      ]
+    },
+    {
+      "front": "When do I reach for **1-D Dynamic Programming**?",
+      "back": "- \"Max / min / number of ways\" over a sequence\n- Each step's answer depends on a few previous steps (i-1, i-2, or all j < i)\n- Brute force recursion repeats the same subproblems\n- Climbing stairs, house robber, coin change, word break, LIS, decode ways",
+      "deck": "LeetCode::1-D Dynamic Programming",
+      "tags": [
+        "1d-dp",
+        "trigger"
+      ]
+    },
+    {
+      "front": "Java template: rolling 1-D DP (House Robber)",
+      "back": "```java\nint rob(int[] nums) {\n    int prev2 = 0, prev1 = 0; // best up to i-2, i-1\n    for (int x : nums) {\n        int cur = Math.max(prev1, prev2 + x); // skip vs take\n        prev2 = prev1;\n        prev1 = cur;\n    }\n    return prev1;\n}\n```\n\nRecipe: **state** → **recurrence** → **base case** → **order** → compress space.",
+      "deck": "LeetCode::1-D Dynamic Programming",
+      "tags": [
+        "1d-dp",
+        "template"
+      ]
+    },
+    {
+      "front": "1-D DP: complexity + common pitfalls",
+      "back": "**Complexity:** usually O(n) or O(n·choices); space O(n) → O(1) when only last few states matter.\n\n**Pitfalls**\n- Define `dp[i]` in words first (\"best using first i items\")\n- Base cases / off-by-one with size `n + 1` arrays\n- Coin Change: init with `amount + 1`, not `Integer.MAX_VALUE` (overflow on +1)\n- Circular variant (House Robber II): run twice, excluding first or last",
+      "deck": "LeetCode::1-D Dynamic Programming",
+      "tags": [
+        "1d-dp",
+        "pitfall"
+      ]
+    },
+    {
+      "front": "Coin Change (fewest coins) → ?",
+      "back": "**Pattern:** unbounded 1-D DP over amount.\n\n- `dp[0] = 0`, others `amount + 1`\n- `dp[a] = min(dp[a], dp[a - c] + 1)` for each coin c ≤ a\n- Answer `dp[amount] > amount ? -1 : dp[amount]`\n- O(amount × coins)",
+      "deck": "LeetCode::1-D Dynamic Programming",
+      "tags": [
+        "1d-dp",
+        "problem"
+      ]
+    },
+    {
+      "front": "Longest Increasing Subsequence → ?",
+      "back": "**Pattern:** DP, or patience sorting.\n\n- O(n²): `dp[i] = 1 + max(dp[j])` for j < i with `a[j] < a[i]`\n- O(n log n): keep `tails`; binary-search the first tail ≥ x and replace it (or append)\n- Answer = tails size",
+      "deck": "LeetCode::1-D Dynamic Programming",
+      "tags": [
+        "1d-dp",
+        "problem"
+      ]
+    },
+    {
+      "front": "When do I reach for **2-D Dynamic Programming**?",
+      "back": "- **Two strings / sequences**: LCS, edit distance, interleaving, distinct subsequences\n- Grid paths: unique paths, min path sum\n- Knapsack: items × capacity (Coin Change II, Target Sum)\n- State needs two indices (i, j) or index + extra state (holding stock, cooldown)",
+      "deck": "LeetCode::2-D Dynamic Programming",
+      "tags": [
+        "2d-dp",
+        "trigger"
+      ]
+    },
+    {
+      "front": "Java template: Longest Common Subsequence",
+      "back": "```java\nint lcs(String a, String b) {\n    int m = a.length(), n = b.length();\n    int[][] dp = new int[m + 1][n + 1]; // dp[i][j]: a[0..i) vs b[0..j)\n    for (int i = 1; i <= m; i++) {\n        for (int j = 1; j <= n; j++) {\n            dp[i][j] = a.charAt(i - 1) == b.charAt(j - 1)\n                ? dp[i - 1][j - 1] + 1\n                : Math.max(dp[i - 1][j], dp[i][j - 1]);\n        }\n    }\n    return dp[m][n];\n}\n```",
+      "deck": "LeetCode::2-D Dynamic Programming",
+      "tags": [
+        "2d-dp",
+        "template"
+      ]
+    },
+    {
+      "front": "2-D DP: complexity + common pitfalls",
+      "back": "**Complexity:** O(m·n) time; space O(m·n) → often O(n) with one row.\n\n**Pitfalls**\n- Padding row/col 0 for empty prefixes → index chars with `i - 1`\n- 0/1 knapsack in 1-D: iterate capacity **downward**; unbounded: **upward**\n- Counting combos (Coin Change II): coins in the **outer** loop, or you count permutations\n- Memoized recursion: use `Integer[][]` / sentinel so 0 isn't \"unvisited\"",
+      "deck": "LeetCode::2-D Dynamic Programming",
+      "tags": [
+        "2d-dp",
+        "pitfall"
+      ]
+    },
+    {
+      "front": "Edit Distance → ?",
+      "back": "**Pattern:** 2-D DP over prefixes.\n\n- `dp[i][0] = i`, `dp[0][j] = j`\n- Equal chars: `dp[i][j] = dp[i-1][j-1]`\n- Else `1 + min(dp[i-1][j]` (delete), `dp[i][j-1]` (insert), `dp[i-1][j-1]` (replace))\n- O(m·n)",
+      "deck": "LeetCode::2-D Dynamic Programming",
+      "tags": [
+        "2d-dp",
+        "problem"
+      ]
+    },
+    {
+      "front": "Coin Change II (number of combinations) → ?",
+      "back": "**Pattern:** unbounded knapsack counting.\n\n- `dp[0] = 1`\n- `for coin: for a = coin..amount: dp[a] += dp[a - coin]`\n- Coins outer ⇒ combinations (order doesn't matter)",
+      "deck": "LeetCode::2-D Dynamic Programming",
+      "tags": [
+        "2d-dp",
+        "problem"
+      ]
+    },
+    {
+      "front": "When do I reach for **Greedy**?",
+      "back": "- A locally best choice never hurts later (provable by exchange argument)\n- Reachability / min jumps: track the **farthest** reach\n- Max subarray → **Kadane**\n- Sort then take (by end time, by ratio, by deadline)\n- If you can find a counterexample quickly → it's DP instead",
+      "deck": "LeetCode::Greedy",
+      "tags": [
+        "greedy",
+        "trigger"
+      ]
+    },
+    {
+      "front": "Java template: Kadane's maximum subarray",
+      "back": "```java\nint maxSubArray(int[] nums) {\n    int cur = nums[0], best = nums[0];\n    for (int i = 1; i < nums.length; i++) {\n        cur = Math.max(nums[i], cur + nums[i]); // extend or restart\n        best = Math.max(best, cur);\n    }\n    return best;\n}\n```",
+      "deck": "LeetCode::Greedy",
+      "tags": [
+        "greedy",
+        "template"
+      ]
+    },
+    {
+      "front": "Greedy: complexity + common pitfalls",
+      "back": "**Complexity:** typically O(n), or O(n log n) with a sort.\n\n**Pitfalls**\n- No proof → probably wrong; try small counterexamples first\n- Kadane: init with `nums[0]`, not 0 (all-negative arrays)\n- Jump Game II: count a jump when `i` reaches the current window end\n- Greedy vs DP confusion on coin change (greedy fails for arbitrary coins)",
+      "deck": "LeetCode::Greedy",
+      "tags": [
+        "greedy",
+        "pitfall"
+      ]
+    },
+    {
+      "front": "Jump Game → ?",
+      "back": "**Pattern:** greedy farthest reach.\n\n- `far = 0`; for each i: if `i > far` return false; `far = max(far, i + nums[i])`\n- Return true\n- O(n), O(1)",
+      "deck": "LeetCode::Greedy",
+      "tags": [
+        "greedy",
+        "problem"
+      ]
+    },
+    {
+      "front": "Gas Station → ?",
+      "back": "**Pattern:** greedy reset of start.\n\n- If Σgas < Σcost → -1\n- Running `tank`; when it goes negative at i, start = i + 1, tank = 0\n- The final start is the unique answer; O(n)",
+      "deck": "LeetCode::Greedy",
+      "tags": [
+        "greedy",
+        "problem"
+      ]
+    },
+    {
+      "front": "When do I reach for **Interval** techniques?",
+      "back": "- Input is ranges `[start, end]`: meetings, bookings, segments\n- Merge overlapping, insert a new interval, find free time\n- Min removals for no overlap, min arrows / rooms\n- First move is almost always: **sort by start** (or by end)",
+      "deck": "LeetCode::Intervals",
+      "tags": [
+        "intervals",
+        "trigger"
+      ]
+    },
+    {
+      "front": "Java template: merge overlapping intervals",
+      "back": "```java\nint[][] merge(int[][] intervals) {\n    Arrays.sort(intervals, (a, b) -> Integer.compare(a[0], b[0]));\n    List<int[]> res = new ArrayList<>();\n    for (int[] iv : intervals) {\n        if (res.isEmpty() || res.get(res.size() - 1)[1] < iv[0]) {\n            res.add(iv); // no overlap\n        } else {\n            int[] last = res.get(res.size() - 1);\n            last[1] = Math.max(last[1], iv[1]);\n        }\n    }\n    return res.toArray(new int[0][]);\n}\n```",
+      "deck": "LeetCode::Intervals",
+      "tags": [
+        "intervals",
+        "template"
+      ]
+    },
+    {
+      "front": "Intervals: complexity + common pitfalls",
+      "back": "**Complexity:** O(n log n) for the sort, then O(n).\n\n**Pitfalls**\n- Do touching endpoints (`[1,2]`, `[2,3]`) count as overlap? Read the problem\n- Merge: sort by **start**; max non-overlapping / arrows: sort by **end**\n- Extend with `max(end)` — a contained interval may end earlier\n- `a[0] - b[0]` comparator can overflow → `Integer.compare`",
+      "deck": "LeetCode::Intervals",
+      "tags": [
+        "intervals",
+        "pitfall"
+      ]
+    },
+    {
+      "front": "Non-overlapping Intervals (min removals) → ?",
+      "back": "**Pattern:** greedy, sort by end.\n\n- Keep the interval that ends **earliest**\n- `prevEnd`; if `start < prevEnd` → remove (count++), else `prevEnd = end`\n- O(n log n)",
+      "deck": "LeetCode::Intervals",
+      "tags": [
+        "intervals",
+        "problem"
+      ]
+    },
+    {
+      "front": "Meeting Rooms II (min rooms) → ?",
+      "back": "**Pattern:** sort by start + min-heap of end times.\n\n- For each meeting: if `heap.peek() <= start` poll (room frees)\n- Offer its end; answer = max heap size\n- Alt: sort starts & ends separately, sweep with two pointers",
+      "deck": "LeetCode::Intervals",
+      "tags": [
+        "intervals",
+        "problem"
+      ]
+    },
+    {
+      "front": "When do I reach for **Math & Geometry** tricks?",
+      "back": "- Matrix rotate / spiral / set zeroes → index manipulation, boundaries\n- Large powers → **fast exponentiation**\n- Digit manipulation, reverse integer, plus one → watch **overflow**\n- Repeated transformation (happy number) → cycle detection\n- Big-number strings (multiply strings) → grade-school arithmetic",
+      "deck": "LeetCode::Math & Geometry",
+      "tags": [
+        "math-geometry",
+        "trigger"
+      ]
+    },
+    {
+      "front": "Java template: rotate matrix 90° clockwise in place",
+      "back": "```java\nvoid rotate(int[][] m) { // transpose, then reverse each row\n    int n = m.length;\n    for (int i = 0; i < n; i++) {\n        for (int j = i + 1; j < n; j++) {\n            int t = m[i][j]; m[i][j] = m[j][i]; m[j][i] = t;\n        }\n    }\n    for (int[] row : m) {\n        for (int l = 0, r = n - 1; l < r; l++, r--) {\n            int t = row[l]; row[l] = row[r]; row[r] = t;\n        }\n    }\n}\n```",
+      "deck": "LeetCode::Math & Geometry",
+      "tags": [
+        "math-geometry",
+        "template"
+      ]
+    },
+    {
+      "front": "Java template: fast power (binary exponentiation)",
+      "back": "```java\ndouble myPow(double x, int n) {\n    long e = n; // avoid overflow negating Integer.MIN_VALUE\n    if (e < 0) { x = 1 / x; e = -e; }\n    double res = 1;\n    while (e > 0) {\n        if ((e & 1) == 1) res *= x;\n        x *= x;\n        e >>= 1;\n    }\n    return res;\n}\n```",
+      "deck": "LeetCode::Math & Geometry",
+      "tags": [
+        "math-geometry",
+        "template"
+      ]
+    },
+    {
+      "front": "Math & Geometry: complexity + common pitfalls",
+      "back": "**Complexity:** matrix ops O(n²) in place; fast pow O(log n).\n\n**Pitfalls**\n- `-Integer.MIN_VALUE` overflows → widen to `long`\n- Reverse Integer: check overflow **before** `x * 10 + d`\n- Spiral: re-check `top <= bottom` / `left <= right` before the reverse passes\n- Never compare doubles with `==` (use epsilon)",
+      "deck": "LeetCode::Math & Geometry",
+      "tags": [
+        "math-geometry",
+        "pitfall"
+      ]
+    },
+    {
+      "front": "Spiral Matrix → ?",
+      "back": "**Pattern:** shrinking boundaries.\n\n- `top, bottom, left, right`\n- Right along top (top++), down right col (right--)\n- If `top <= bottom`: left along bottom (bottom--)\n- If `left <= right`: up left col (left++)\n- Repeat while in bounds; O(m·n)",
+      "deck": "LeetCode::Math & Geometry",
+      "tags": [
+        "math-geometry",
+        "problem"
+      ]
+    },
+    {
+      "front": "When do I reach for **Bit Manipulation**?",
+      "back": "- Every element appears twice except one → **XOR**\n- Count set bits, power of two, reverse bits\n- \"Without using + or −\" → XOR + carry\n- O(1) extra space with pairing/cancellation\n- Subsets as masks when n ≤ ~20",
+      "deck": "LeetCode::Bit Manipulation",
+      "tags": [
+        "bit-manipulation",
+        "trigger"
+      ]
+    },
+    {
+      "front": "Java template: core bit tricks",
+      "back": "```java\nint singleNumber(int[] nums) {\n    int x = 0;\n    for (int v : nums) x ^= v; // pairs cancel\n    return x;\n}\n\nint popcount(int n) {\n    int c = 0;\n    while (n != 0) { n &= n - 1; c++; } // clear lowest set bit\n    return c;\n}\n\nboolean isPowerOfTwo(int n) { return n > 0 && (n & (n - 1)) == 0; }\n\nint[] countBits(int n) {\n    int[] dp = new int[n + 1];\n    for (int i = 1; i <= n; i++) dp[i] = dp[i >> 1] + (i & 1);\n    return dp;\n}\n```",
+      "deck": "LeetCode::Bit Manipulation",
+      "tags": [
+        "bit-manipulation",
+        "template"
+      ]
+    },
+    {
+      "front": "Bit Manipulation: complexity + common pitfalls",
+      "back": "**Complexity:** O(1) per op on 32-bit ints; O(n) over arrays.\n\n**Pitfalls**\n- `>>` keeps the sign; `>>>` fills with 0 (use for unsigned shifts)\n- Precedence: `n & 1 == 1` is wrong → `(n & 1) == 1`\n- Java ints are signed 32-bit; use `1L << k` for k ≥ 31\n- Built-ins: `Integer.bitCount`, `Integer.reverse`, `Integer.lowestOneBit`",
+      "deck": "LeetCode::Bit Manipulation",
+      "tags": [
+        "bit-manipulation",
+        "pitfall"
+      ]
+    },
+    {
+      "front": "Missing Number (0..n, one missing) → ?",
+      "back": "**Pattern:** XOR cancellation (or Gauss sum).\n\n- `x = n`; for each i: `x ^= i ^ nums[i]`\n- Everything present cancels; `x` is the missing number\n- O(n), O(1)",
+      "deck": "LeetCode::Bit Manipulation",
+      "tags": [
+        "bit-manipulation",
+        "problem"
+      ]
+    },
+    {
+      "front": "Sum of Two Integers (no + / −) → ?",
+      "back": "**Pattern:** XOR for sum, AND+shift for carry.\n\n- Loop while `b != 0`: `carry = (a & b) << 1; a = a ^ b; b = carry`\n- Return `a` — works for negatives in two's complement",
+      "deck": "LeetCode::Bit Manipulation",
+      "tags": [
+        "bit-manipulation",
+        "problem"
+      ]
+    }
+  ]
+}
