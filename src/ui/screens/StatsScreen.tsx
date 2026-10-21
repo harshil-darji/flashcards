@@ -12,7 +12,7 @@ import { StatTile } from '../components/StatTile';
 import { BarChart } from '../components/BarChart';
 
 export default function StatsScreen() {
-  const { cards, settings, version } = useStore();
+  const { cards, settings, version, limits } = useStore();
   const [logs, setLogs] = useState<ReviewLog[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,7 +31,9 @@ export default function StatsScreen() {
     const chart = safe(() => reviewsPerDay(l, 30, now, h), []);
     return {
       streak: safe(() => streak(l, now, h), 0),
-      due: safe(() => dueToday(cards, now, h), 0),
+      // core dueToday counts every New card as due; apply today's limits like the review queue does.
+      due: Math.min(limits.reviewsLeft, safe(() => dueToday(cards.filter((c) => c.fsrs.state !== State.New), now, h), 0))
+        + Math.min(limits.newLeft, byState(State.New)),
       today: today.length,
       againToday: today.filter((x) => x.rating === 1).length,
       chart,
@@ -41,7 +43,7 @@ export default function StatsScreen() {
       review: byState(State.Review),
       allTime: l.length,
     };
-  }, [logs, cards, settings.dayStartHour]);
+  }, [logs, cards, settings.dayStartHour, limits]);
 
   const retentionToday = s.today ? Math.round(((s.today - s.againToday) / s.today) * 100) : null;
 

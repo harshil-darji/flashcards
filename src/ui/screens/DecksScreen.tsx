@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { Deck, ID } from '../../types';
 import * as db from '../../core/db';
+import { normalizeDeckPath } from '../../core/importExport';
 import { useStore } from '../store';
 import { buildTree, findNode, subtreeIds } from '../lib/decks';
 import { createDeckPath, childPath, renameDeck } from '../lib/deckOps';
@@ -18,7 +19,7 @@ import { DeckDetail } from './DeckDetail';
 type Prompt = { kind: 'create'; parent: Deck | null } | { kind: 'rename'; deck: Deck } | null;
 
 export default function DecksScreen({ onStudy }: { onStudy: (deckId?: ID) => void }) {
-  const { decks, cards, reload, ready } = useStore();
+  const { decks, cards, reload, ready, limits } = useStore();
   const [openId, setOpenId] = useState<ID | null>(null);
   const [addMenu, setAddMenu] = useState(false);
   const [prompt, setPrompt] = useState<Prompt>(null);
@@ -26,7 +27,7 @@ export default function DecksScreen({ onStudy }: { onStudy: (deckId?: ID) => voi
   const [editor, setEditor] = useState<EditorTarget>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const tree = useMemo(() => buildTree(decks, cards), [decks, cards]);
+  const tree = useMemo(() => buildTree(decks, cards, Date.now(), limits), [decks, cards, limits]);
   const openNode = openId ? findNode(tree, openId) : undefined;
 
   const run = async (fn: () => Promise<unknown>) => {
@@ -42,15 +43,14 @@ export default function DecksScreen({ onStudy }: { onStudy: (deckId?: ID) => voi
       <PromptDialog
         open={!!prompt}
         title={prompt?.kind === 'rename' ? 'Rename Deck' : prompt?.parent ? `New Sub-deck in “${prompt.parent.name}”` : 'New Deck'}
-        message={prompt?.kind === 'create' && !prompt.parent ? 'Use :: for nesting, e.g. LeetCode::Graphs' : undefined}
-        initialValue={prompt?.kind === 'rename' ? prompt.deck.name : ''}
+        message={prompt?.kind === 'rename' ? 'Full path. Use :: to nest or move, e.g. LeetCode::Graphs' : prompt?.kind === 'create' && !prompt.parent ? 'Use :: for nesting, e.g. LeetCode::Graphs' : undefined}
+        initialValue={prompt?.kind === 'rename' ? prompt.deck.path : ''}
         placeholder="Deck name"
         confirmLabel={prompt?.kind === 'rename' ? 'Rename' : 'Create'}
         validate={(v) => {
           if (!prompt) return null;
-          const path = prompt.kind === 'rename'
-            ? childPath(decks.find((d) => d.id === prompt.deck.parentId) ?? null, v.split('::').join(' '))
-            : childPath(prompt.parent, v);
+          const path = prompt.kind === 'rename' ? normalizeDeckPath(v) : childPath(prompt.parent, v);
+          if (prompt.kind === 'rename' && (path + '::').startsWith(prompt.deck.path + '::') && path !== prompt.deck.path) return 'A deck can’t be moved inside itself.';
           const clash = decks.find((d) => d.path === path);
           return clash && !(prompt.kind === 'rename' && clash.id === prompt.deck.id) ? 'A deck with that name already exists.' : null;
         }}
@@ -59,7 +59,7 @@ export default function DecksScreen({ onStudy }: { onStudy: (deckId?: ID) => voi
           const p = prompt;
           setPrompt(null);
           if (!p) return;
-          if (p.kind === 'rename') run(() => renameDeck(p.deck, v, decks));
+          if (p.kind === 'rename') run(() => renameDeck(p.deck, v));
           else run(() => createDeckPath(childPath(p.parent, v), decks));
         }}
       />

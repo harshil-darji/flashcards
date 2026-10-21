@@ -30,9 +30,10 @@ export default function ReviewScreen({ deckId, startNow, onExit }: { deckId?: ID
 }
 
 function ReviewPicker({ onStart }: { onStart: (deckId?: ID) => void }) {
-  const { decks, cards } = useStore();
-  const tree = useMemo(() => buildTree(decks, cards), [decks, cards]);
-  const total = tree.reduce((a, n) => ({ due: a.due + n.counts.due, fresh: a.fresh + n.counts.fresh }), { due: 0, fresh: 0 });
+  const { decks, cards, limits } = useStore();
+  const tree = useMemo(() => buildTree(decks, cards, Date.now(), limits), [decks, cards, limits]);
+  const sum = tree.reduce((a, n) => ({ due: a.due + n.counts.due, fresh: a.fresh + n.counts.fresh }), { due: 0, fresh: 0 });
+  const total = { due: Math.min(sum.due, limits.reviewsLeft), fresh: Math.min(sum.fresh, limits.newLeft) };
   const rows: React.JSX.Element[] = [];
   const walk = (ns: typeof tree) => ns.forEach((n) => {
     if (n.counts.due + n.counts.fresh > 0) {

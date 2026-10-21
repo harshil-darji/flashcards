@@ -18,8 +18,22 @@ export function subtreeIds(deckId: ID, decks: Deck[]): Set<ID> {
   return ids;
 }
 
-/** Builds the deck tree with due/new/total counts aggregated over sub-decks. */
-export function buildTree(decks: Deck[], cards: Card[], now = Date.now()): DeckNode[] {
+export interface DailyLimits { newLeft: number; reviewsLeft: number }
+
+/** Builds the deck tree. `fresh`/`due` are capped by today's remaining limits (like Anki); `total` is not. */
+export function buildTree(decks: Deck[], cards: Card[], now = Date.now(), limits?: DailyLimits): DeckNode[] {
+  const tree = buildRawTree(decks, cards, now);
+  if (!limits) return tree;
+  const cap = (ns: DeckNode[]) => ns.forEach((n) => {
+    n.counts.fresh = Math.min(n.counts.fresh, limits.newLeft);
+    n.counts.due = Math.min(n.counts.due, limits.reviewsLeft);
+    cap(n.children);
+  });
+  cap(tree);
+  return tree;
+}
+
+function buildRawTree(decks: Deck[], cards: Card[], now: number): DeckNode[] {
   const own = new Map<ID, DeckCounts>();
   for (const c of cards) {
     const k = own.get(c.deckId) ?? { due: 0, fresh: 0, total: 0 };

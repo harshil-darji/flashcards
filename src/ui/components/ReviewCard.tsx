@@ -24,6 +24,8 @@ export function ReviewCard({ card, deckPath, flipped, onFlip, onSwipe }: {
   useLayoutEffect(() => {
     setD({ x: 0, y: 0 });
     setFly(null);
+    moved.current = false;
+    start.current = null;
   }, [card.id]);
 
   useLayoutEffect(() => {
@@ -81,7 +83,8 @@ export function ReviewCard({ card, deckPath, flipped, onFlip, onSwipe }: {
     >
       {dir && <div className={`swipe-hint ${dir}`}>{dir === 'left' ? 'Again' : dir === 'right' ? 'Good' : 'Easy'}</div>}
       {deckPath && <div className="review-card-deck">{deckPath}</div>}
-      <div className="review-card-body" ref={bodyRef}>
+      {/* touch-action must be on the scroll container too: it resets the effective touch-action for its descendants. */}
+      <div className="review-card-body" ref={bodyRef} style={{ touchAction: scrollable ? 'pan-y' : 'none' }}>
         <Markdown source={card.front} className="review-front" />
         {flipped && (
           <>

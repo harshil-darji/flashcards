@@ -62,4 +62,29 @@ describe('db', () => {
     expect(r2).toEqual({ decksCreated: 0, cardsAdded: 0, cardsUpdated: 1 });
     expect((await db.getCard('x'))?.front).toBe('new');
   });
+  it('renameDeck rewrites sub-deck paths, re-parents and creates ancestors atomically', async () => {
+    await db.putDeck(deck('a', 'A', null));
+    await db.putDeck(deck('b', 'A::B', 'a'));
+    await db.putDeck(deck('c', 'A::B::C', 'b'));
+    await db.putDeck(deck('x', 'X', null));
+    const r = await db.renameDeck('b', ' New :: Bee ');
+    expect(r).toMatchObject({ id: 'b', name: 'Bee', path: 'New::Bee' });
+    const decks = await db.listDecks();
+    const byPath = new Map(decks.map((d) => [d.path, d]));
+    expect([...byPath.keys()]).toEqual(['A', 'New', 'New::Bee', 'New::Bee::C', 'X']);
+    expect(byPath.get('New::Bee')!.parentId).toBe(byPath.get('New')!.id);
+    expect(byPath.get('New::Bee::C')!.parentId).toBe('b');
+    // leaf rename keeps parent
+    await db.renameDeck('c', 'New::Bee::See');
+    expect((await db.getDeck('c'))!.path).toBe('New::Bee::See');
+  });
+  it('renameDeck rejects collisions and self-nesting without partial writes', async () => {
+    await db.putDeck(deck('a', 'A', null));
+    await db.putDeck(deck('b', 'A::B', 'a'));
+    await db.putDeck(deck('x', 'X', null));
+    await expect(db.renameDeck('a', 'X')).rejects.toThrow(/exists/);
+    await expect(db.renameDeck('a', 'A::B::Z')).rejects.toThrow(/inside itself/);
+    await expect(db.renameDeck('nope', 'Q')).rejects.toThrow(/not found/);
+    expect((await db.listDecks()).map((d) => d.path)).toEqual(['A', 'A::B', 'X']);
+  });
 });

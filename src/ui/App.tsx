@@ -11,7 +11,7 @@ import StatsScreen from './screens/StatsScreen';
 import SettingsScreen from './screens/SettingsScreen';
 
 function Shell() {
-  const { error, cards, settings } = useStore();
+  const { error, cards, limits } = useStore();
   const [tab, setTab] = useState<TabId>('decks');
   const [reviewDeck, setReviewDeck] = useState<ID | null>(null);
   const [autoStart, setAutoStart] = useState(false);
@@ -22,10 +22,10 @@ function Shell() {
 
   const dueBadge = useMemo(() => {
     const now = Date.now();
-    const due = cards.filter((c) => isDue(c, now)).length;
-    const fresh = Math.min(settings.newCardsPerDay, cards.filter(isNew).length);
+    const due = Math.min(limits.reviewsLeft, cards.filter((c) => isDue(c, now)).length);
+    const fresh = Math.min(limits.newLeft, cards.filter(isNew).length);
     return due + fresh;
-  }, [cards, settings.newCardsPerDay]);
+  }, [cards, limits]);
 
   const study = (deckId?: ID) => {
     setReviewDeck(deckId ?? null);

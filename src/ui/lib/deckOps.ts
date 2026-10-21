@@ -14,19 +14,7 @@ export function childPath(parent: Deck | null, name: string): string {
   return normalizeDeckPath(parent ? `${parent.path}${DECK_SEPARATOR}${name}` : name);
 }
 
-/** Renames a deck's leaf name and rewrites the paths of all its sub-decks. */
-export async function renameDeck(deck: Deck, newName: string, decks: Deck[]): Promise<void> {
-  const name = newName.split(DECK_SEPARATOR).join(' ').trim();
-  const parent = deck.parentId ? decks.find((d) => d.id === deck.parentId) ?? null : null;
-  const newPath = childPath(parent, name);
-  if (newPath === deck.path) return;
-  if (decks.some((d) => d.id !== deck.id && d.path === newPath)) throw new Error('A deck with that name already exists.');
-  const now = Date.now();
-  const oldPrefix = deck.path + DECK_SEPARATOR;
-  await db.putDeck({ ...deck, name, path: newPath, updatedAt: now });
-  for (const d of decks) {
-    if (d.path.startsWith(oldPrefix)) {
-      await db.putDeck({ ...d, path: newPath + DECK_SEPARATOR + d.path.slice(oldPrefix.length), updatedAt: now });
-    }
-  }
+/** Renames or moves a deck (full `::` path) in one db transaction. */
+export async function renameDeck(deck: Deck, newPath: string): Promise<void> {
+  await db.renameDeck(deck.id, newPath);
 }

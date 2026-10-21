@@ -77,7 +77,7 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 html, body, #root { height: 100%; margin: 0; }
-html { background: var(--bg); }
+html { background: var(--bg); overscroll-behavior: none; }
 
 body {
   font-family: var(--font-system);
@@ -90,7 +90,7 @@ body {
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
   -webkit-touch-callout: none;
-  overscroll-behavior-y: none;
+  overscroll-behavior: none;
   overflow: hidden;
 }
 
@@ -401,6 +401,7 @@ code, pre { font-family: var(--font-mono); font-size: 14px; }
 .review-stage { flex: 1; display: flex; flex-direction: column; min-height: 0; gap: 12px; padding-top: 4px; }
 .review-counts { display: flex; justify-content: center; gap: 14px; font-size: 15px; font-variant-numeric: tabular-nums; }
 .review-card {
+  overscroll-behavior: contain;
   position: relative; flex: 1; min-height: 240px; display: flex; flex-direction: column;
   background: var(--bg-elevated); border-radius: 20px; box-shadow: var(--card-shadow);
   padding: 20px; overflow: hidden; -webkit-user-select: none; user-select: none; cursor: pointer;

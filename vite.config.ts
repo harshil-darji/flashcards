@@ -20,8 +20,10 @@ export default defineConfig({
         description: 'Spaced-repetition flashcards for LeetCode patterns and interview prep',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '.',
-        scope: '.',
+        // Absolute under a Pages subpath (e.g. /flashcards/), relative otherwise.
+        start_url: base,
+        scope: base,
+        id: base,
         background_color: '#f2f2f7',
         theme_color: '#f2f2f7',
         icons: [
@@ -33,6 +35,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,svg,ico,json,woff2}'],
         navigateFallback: 'index.html',
+        cleanupOutdatedCaches: true,
       },
     }),
   ],
