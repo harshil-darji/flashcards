@@ -45,10 +45,16 @@
 
 .review-session .review-actions { padding-bottom: 0; }
 
+/* ---------- card header: non-scrolling control row; the body scrolls beneath it ---------- */
+.review-card-header {
+  flex: none; display: flex; justify-content: flex-end; align-items: center; gap: 8px;
+  margin: -8px -8px 8px 0; position: relative; z-index: 3;
+}
+
 /* ---------- text size (aA) ---------- */
 .review-card { --review-scale: 1; }
 .review-text-size {
-  position: absolute; top: 10px; right: 10px; z-index: 3;
+  order: 2;
   min-width: 44px; height: 32px; padding: 0 8px; border-radius: 16px;
   display: flex; align-items: baseline; justify-content: center; gap: 1px;
   background: var(--input-bg); color: var(--label-secondary);
@@ -56,8 +62,7 @@
 }
 .review-text-size .small { font-size: 12px; }
 .review-text-size:active { opacity: .5; }
-/* keep the first line of the card clear of the button */
-.review-card .review-card-body > .review-front { padding-right: 40px; }
+
 .review-card .review-front { font-size: calc(20px * var(--review-scale)); }
 .review-card .review-back { font-size: calc(17px * var(--review-scale)); }
 .review-card .markdown h1 { font-size: calc(24px * var(--review-scale)); }
@@ -88,7 +93,7 @@
 .review-card .review-card-body .markdown pre code.hljs.code-scroll * { touch-action: inherit; }
 
 /* ---------- code language picker (left of aA; only on cards with both Java and Python) ---------- */
-.review-code-lang-wrap { position: absolute; top: 10px; right: 62px; z-index: 4; }
+.review-code-lang-wrap { position: relative; order: 1; z-index: 4; }
 .review-code-lang {
   height: 32px; padding: 0 10px 0 12px; border-radius: 16px;
   display: flex; align-items: center; gap: 4px;
@@ -108,9 +113,7 @@
 .review-code-lang-option + .review-code-lang-option { border-top: 0.5px solid var(--separator); }
 .review-code-lang-option:active { background: var(--row-pressed); }
 .review-code-lang-option .check { width: 18px; color: var(--tint); font-weight: 700; }
-/* first line of the card stays clear of both controls */
-.review-card.has-lang-picker .review-card-body > .review-front { padding-right: 0; }
-.review-card.has-lang-picker .review-card-body > .review-front > :first-child { padding-right: 140px; }
+
 
 /* details summaries / diagram labels follow the review text size */
 .review-card .markdown details.md-details > summary { font-size: calc(16px * var(--review-scale)); }

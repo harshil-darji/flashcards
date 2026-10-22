@@ -263,6 +263,7 @@ export function ReviewCard({ card, flipped, onFlip, onSwipe }: {
       aria-label={flipped ? 'Answer shown' : 'Show answer'}
     >
       {dir && <div className={`swipe-hint ${dir}`}>{dir === 'left' ? 'Again' : dir === 'right' ? 'Good' : 'Easy'}</div>}
+      <div className="review-card-header">
       <button
         type="button"
         className="review-text-size review-ctrl"
@@ -303,6 +304,7 @@ export function ReviewCard({ card, flipped, onFlip, onSwipe }: {
           )}
         </div>
       )}
+      </div>
       {/* touch-action must be on the scroll container too: it resets the effective touch-action for its descendants. */}
       <div
         className={`review-card-body${more ? ' more' : ''}`}
