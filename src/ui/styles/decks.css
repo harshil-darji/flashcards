@@ -1,0 +1,86 @@
+/* Decks screen: deck rows with mastery bars, labeled counts, study plans. Uses theme.css variables only. */
+
+/* ---------- labeled count pills (stacked: new over due) ---------- */
+.count-pills.labeled { flex-direction: column; align-items: flex-end; gap: 1px; font-size: 13px; line-height: 17px; }
+.count-pills.labeled .count { min-width: 0; font-weight: 600; white-space: nowrap; }
+.count-pills.labeled .count-label { font-weight: 400; opacity: .85; }
+.count-pills.labeled .count.zero { color: var(--label-tertiary); font-weight: 400; }
+
+/* ---------- deck rows ---------- */
+.deck-list .list-row-title {
+  white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  line-height: 21px; overflow-wrap: anywhere;
+}
+.deck-list .list-row-subtitle { white-space: normal; overflow: visible; }
+.deck-sub { display: flex; flex-direction: column; gap: 5px; padding-bottom: 2px; }
+.deck-sub-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.deck-sub-mastered { color: var(--green); }
+.deck-sub-zero { color: var(--label-tertiary); }
+
+/* ---------- mastery bar ---------- */
+.mastery-bar {
+  position: relative; display: block; width: 100%; height: 4px; border-radius: 2px; overflow: hidden;
+  background: var(--fill);
+}
+.mastery-bar.tall { height: 8px; border-radius: 4px; }
+.mastery-bar > span { position: absolute; left: 0; top: 0; bottom: 0; border-radius: inherit; transition: width .3s; }
+.mastery-bar-started { background: color-mix(in srgb, var(--green) 35%, transparent); }
+.mastery-bar-mastered { background: var(--green); }
+
+.deck-mastery { margin: 0 0 16px; padding: 12px 16px; background: var(--bg-elevated); border-radius: var(--radius); }
+.deck-mastery-text { display: flex; justify-content: space-between; font-size: 15px; color: var(--label-secondary); margin-bottom: 8px; font-variant-numeric: tabular-nums; }
+
+/* ---------- study plan card ---------- */
+.plan-section { margin-bottom: 24px; }
+.plan-card, .plan-summary {
+  display: flex; flex-direction: column; gap: 10px; width: 100%; text-align: left;
+  padding: 14px 16px 14px; background: var(--bg-elevated); color: var(--label);
+  border-radius: var(--radius-card); box-shadow: var(--card-shadow);
+}
+.plan-summary { margin: 0 0 28px; }
+.plan-card { transition: transform .1s, background-color .25s; }
+.plan-card:active { background: var(--row-pressed); transform: scale(.99); transition: none; }
+.plan-card + .plan-card { margin-top: 12px; }
+.plan-card-head { display: flex; align-items: center; gap: 12px; }
+.plan-card-badge {
+  flex: none; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--orange), var(--red)); color: #fff; font-weight: 700; font-size: 15px; letter-spacing: -.3px;
+}
+.plan-card-titles { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.plan-card-title { font-size: 17px; font-weight: 600; }
+.plan-card-sub { font-size: 13px; color: var(--label-secondary); }
+.plan-chevron { color: var(--label-tertiary); display: flex; }
+.plan-card-figure { display: flex; align-items: baseline; gap: 6px; font-variant-numeric: tabular-nums; }
+.plan-card-num { font-size: 28px; font-weight: 700; letter-spacing: -.5px; line-height: 1; }
+.plan-card-of { font-size: 15px; color: var(--label-secondary); }
+.plan-card-pct { margin-left: auto; font-size: 15px; font-weight: 600; color: var(--green); }
+.plan-card-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.meta-chip {
+  font-size: 12px; line-height: 16px; padding: 3px 8px; border-radius: 10px;
+  background: var(--fill); color: var(--label-secondary); font-variant-numeric: tabular-nums;
+}
+.meta-chip.due { background: color-mix(in srgb, var(--green) 16%, transparent); color: var(--green); font-weight: 600; }
+.meta-chip.learning { background: color-mix(in srgb, var(--blue) 14%, transparent); color: var(--blue); }
+.meta-chip.zero { background: var(--fill); color: var(--label-secondary); font-weight: 400; }
+
+/* ---------- plan view rows ---------- */
+.plan-group { background: var(--bg-elevated); border-radius: var(--radius); overflow: hidden; }
+.plan-row { position: relative; display: flex; align-items: center; gap: 12px; padding: 11px 12px 11px 14px; }
+.plan-row + .plan-row::before {
+  content: ''; position: absolute; top: 0; left: 52px; right: 0; height: 0.5px; background: var(--separator);
+}
+.plan-step {
+  flex: none; width: 26px; height: 26px; border-radius: 13px; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600; color: var(--label-secondary); background: var(--fill); font-variant-numeric: tabular-nums;
+}
+.plan-step.done { background: var(--green); color: #fff; }
+.plan-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.plan-row-title { font-size: 16px; line-height: 20px; }
+.plan-row-sub { font-size: 13px; line-height: 16px; color: var(--label-secondary); font-variant-numeric: tabular-nums; }
+.plan-row-due { color: var(--green); font-weight: 600; }
+.plan-study {
+  flex: none; min-height: 32px; padding: 0 14px; border-radius: 16px; font-size: 15px; font-weight: 600;
+  background: color-mix(in srgb, var(--tint) 15%, transparent); color: var(--tint);
+}
+.plan-study:active { opacity: .6; }
+.plan-study:disabled { background: var(--fill); color: var(--label-tertiary); }
