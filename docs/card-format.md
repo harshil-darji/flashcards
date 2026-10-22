@@ -72,7 +72,7 @@ with the source instead of breaking the card. The tests fail if a seed card has 
 | Fence | Syntax | Example |
 |-------|--------|---------|
 | `tree` | LeetCode level order, `null` for gaps | `[3,9,20,null,null,15,7]` |
-| `graph` | one edge per line (or `,`/`;`-separated): `A -> B` directed, `A -- B` undirected, `A <-> B` both ways, `: w` weight; a bare name adds an isolated node | `A -> B : 4` |
+| `graph` | one edge per line (or `,`/`;`-separated): `A -> B` directed, `A -- B` undirected, `A <-> B` both ways, `A ~> B` dashed directed (e.g. random pointers), `: w` weight; a bare name adds an isolated node (bare names listed first fix the circle order, clockwise from the top) | `A -> B : 4` |
 | `grid` | one row per line, cells separated by spaces or commas, or a JSON 2D array | `1 1 0` |
 | `list` | `->`- or comma-separated values; `cycle: k` makes the tail point to node `k` (0-based, LeetCode `pos`, `-1` = none) | `3 -> 2 -> 0 -> -4` + `cycle: 1` |
 

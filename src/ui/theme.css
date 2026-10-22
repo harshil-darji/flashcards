@@ -524,10 +524,11 @@ code, pre { font-family: var(--font-mono); font-size: 14px; }
 .dg-svg .dg-label, .dg-svg .dg-weight, .dg-svg .dg-null {
   font-family: var(--font-mono); font-size: 13px; text-anchor: middle; dominant-baseline: central; fill: var(--label);
 }
-.dg-svg .dg-weight { font-size: 11px; fill: var(--label-secondary); }
+.dg-svg .dg-weight { font-size: 11px; fill: var(--label-secondary); paint-order: stroke; stroke: var(--bg-elevated); stroke-width: 3px; stroke-linejoin: round; }
 .dg-svg .dg-null { fill: var(--label-secondary); font-size: 15px; }
 .dg-svg .dg-edge { stroke: var(--label-secondary); stroke-width: 1.6; }
 .dg-svg .dg-cycle { stroke: var(--orange); stroke-dasharray: 4 3; }
+.dg-svg .dg-dashed { stroke-dasharray: 5 3; }
 .dg-svg .dg-arrowhead { fill: var(--label-secondary); }
 .dg-svg .dg-node circle, .dg-svg .dg-node rect { fill: var(--bg-elevated); stroke: var(--label-secondary); stroke-width: 1.6; }
 .dg-svg .dg-cell rect { fill: var(--bg-elevated); stroke: var(--separator); stroke-width: 1; }

@@ -2,7 +2,7 @@
  * Diagram fences → inline SVG. Author-facing syntax: docs/card-format.md.
  *
  *   ```tree   [3,9,20,null,null,15,7]           LeetCode level order; `9*` highlights a node
- *   ```graph  A -> B : 4   /   A -- B           one edge per line (-> directed, -- undirected, `: w` weight)
+ *   ```graph  A -> B : 4   /   A -- B           one edge per line (-> directed, -- undirected, ~> dashed directed, `: w` weight)
  *   ```grid   1 1 0 / 0 1 0                     one row per line (spaces or commas, or a JSON 2D array); `1*` `1+` `1!` mark cells
  *   ```list   1 -> 2 -> 3 -> 4                  `cycle: 1` = tail points back to index 1 (LeetCode `pos`)
  *
@@ -124,10 +124,10 @@ export function renderTree(src: string): string {
 
 // ---------------------------------------------------------------- graph
 
-export interface GraphEdge { a: string; b: string; directed: boolean; w?: string }
+export interface GraphEdge { a: string; b: string; directed: boolean; w?: string; dashed?: boolean }
 export interface Graph { nodes: { id: string; mark: Mark }[]; edges: GraphEdge[]; caption?: string }
 
-/** One edge per line: `A -> B`, `A -- B`, optional ` : weight`; a bare `D` adds an isolated node; `A*` highlights. Commas/semicolons also separate edges. */
+/** One edge per line: `A -> B`, `A -- B`, `A ~> B` (dashed directed, e.g. a random pointer), optional ` : weight`; a bare `D` adds an isolated node (bare names listed first fix the layout order); `A*` highlights. Commas/semicolons also separate edges. */
 export function parseGraph(src: string): Graph {
   const { body, opts } = options(src, []);
   const items = body.flatMap((l) => l.split(/[;,]/)).map((s) => s.trim()).filter(Boolean);
@@ -142,10 +142,11 @@ export function parseGraph(src: string): Graph {
   };
   const edges: GraphEdge[] = [];
   for (const it of items) {
-    const m = /^(.+?)\s*(->|--|<->)\s*(.+?)(?:\s*:\s*(.+))?$/.exec(it);
+    const m = /^(.+?)\s*(<->|->|--|~>)\s*(.+?)(?:\s*:\s*(.+))?$/.exec(it);
     if (!m) { add(it); continue; }
     const a = add(m[1]), b = add(m[3]);
     if (m[2] === '<->') { edges.push({ a, b, directed: true, w: m[4] }, { a: b, b: a, directed: true }); continue; }
+    if (m[2] === '~>') { edges.push({ a, b, directed: true, w: m[4], dashed: true }); continue; }
     edges.push({ a, b, directed: m[2] === '->', w: m[4] });
   }
   return { nodes: [...nodes].map(([id, mark]) => ({ id, mark })), edges, caption: opts.caption };
@@ -176,9 +177,16 @@ export function renderGraph(src: string): string {
     const off = e.directed && pair.has(`${e.b}\n${e.a}`) ? 5 : 0;
     const ox = -uy * off, oy = ux * off;
     const x1 = p.x + ux * R + ox, y1 = p.y + uy * R + oy, x2 = q.x - ux * (R + (e.directed ? 2 : 0)) + ox, y2 = q.y - uy * (R + (e.directed ? 2 : 0)) + oy;
-    edges += `<line class="dg-edge" x1="${n1(x1)}" y1="${n1(y1)}" x2="${n1(x2)}" y2="${n1(y2)}"${e.directed ? ` marker-end="url(#${id})"` : ''}/>`;
+    edges += `<line class="dg-edge${e.dashed ? ' dg-dashed' : ''}" x1="${n1(x1)}" y1="${n1(y1)}" x2="${n1(x2)}" y2="${n1(y2)}"${e.directed ? ` marker-end="url(#${id})"` : ''}/>`;
     if (e.w !== undefined) {
-      const mx = (x1 + x2) / 2 - uy * 10, my = (y1 + y2) / 2 + ux * 10;
+      // weight sits beside the edge midpoint: rim edges put it outside the circle; chords (midpoint near the centre)
+      // take whichever side is farther from every node, so the label can't be read as a neighbouring edge's weight
+      const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
+      const side = (k: number) => ({ x: cx - uy * 10 * k, y: cy + ux * 10 * k });
+      const clearance = (pt: { x: number; y: number }) => Math.min(...[...at.values()].map((v) => Math.hypot(v.x - pt.x, v.y - pt.y)));
+      const chord = Math.hypot(cx - C, cy - C) < rad * Math.cos(Math.PI / n) - 6; // rim edges' midpoints sit at rad·cos(π/n)
+      const s = chord ? (clearance(side(1)) >= clearance(side(-1)) ? 1 : -1) : (cx - C) * -uy + (cy - C) * ux >= 0 ? 1 : -1;
+      const { x: mx, y: my } = side(s);
       edges += `<text class="dg-weight" x="${n1(mx)}" y="${n1(my)}">${label(e.w)}</text>`;
     }
   }

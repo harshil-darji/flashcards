@@ -60,6 +60,49 @@ describe('graph', () => {
     expect(d).toContain('>4</text>');
     expect(renderDiagram('graph', '1 -- 2')).not.toContain('marker-end');
   });
+  it('~> is a dashed directed edge (random pointers next to solid next pointers)', () => {
+    const g = parseGraph('7 -> 13\n13 ~> 7');
+    expect(g.edges).toEqual([
+      { a: '7', b: '13', directed: true, w: undefined },
+      { a: '13', b: '7', directed: true, w: undefined, dashed: true },
+    ]);
+    const d = renderDiagram('graph', '7 -> 13\n13 ~> 7');
+    expect(count(d, /class="dg-edge dg-dashed"/g)).toBe(1);
+    expect(count(d, /class="dg-edge"/g)).toBe(1);
+    expect(count(d, /marker-end=/g)).toBe(2);
+  });
+  it('bare names listed first fix the circle order', () => {
+    expect(parseGraph('a\nc\nb\na -- b\nb -- c').nodes.map((n) => n.id)).toEqual(['a', 'c', 'b']);
+  });
+  it('weight labels sit on the outer side of rim edges', () => {
+    // square 0(top) 1(right) 2(bottom) 3(left); every weight must be farther from the centre than its edge midpoint
+    const d = renderDiagram('graph', '0 -- 1 : 5\n1 -- 2 : 6\n2 -- 3 : 7\n3 -- 0 : 8');
+    const vb = /viewBox="0 0 ([\d.]+)/.exec(d)!; const C = Number(vb[1]) / 2;
+    const lines = [...d.matchAll(/<line class="dg-edge" x1="([\d.-]+)" y1="([\d.-]+)" x2="([\d.-]+)" y2="([\d.-]+)"/g)].map((m) => m.slice(1).map(Number));
+    const ws = [...d.matchAll(/<text class="dg-weight" x="([\d.-]+)" y="([\d.-]+)"/g)].map((m) => [Number(m[1]), Number(m[2])]);
+    expect(ws).toHaveLength(4);
+    ws.forEach(([x, y], i) => {
+      const [x1, y1, x2, y2] = lines[i];
+      expect(Math.hypot(x - C, y - C)).toBeGreaterThan(Math.hypot((x1 + x2) / 2 - C, (y1 + y2) / 2 - C));
+    });
+  });
+  it('triangle edges are rim edges: weights go outside', () => {
+    const d = renderDiagram('graph', '0 -> 1 : 100\n1 -> 2 : 100\n0 -> 2 : 500');
+    const C = Number(/viewBox="0 0 ([\d.]+)/.exec(d)![1]) / 2;
+    const lines = [...d.matchAll(/<line class="dg-edge" x1="([\d.-]+)" y1="([\d.-]+)" x2="([\d.-]+)" y2="([\d.-]+)"/g)].map((m) => m.slice(1).map(Number));
+    [...d.matchAll(/<text class="dg-weight" x="([\d.-]+)" y="([\d.-]+)"/g)].forEach((m, i) => {
+      const [x1, y1, x2, y2] = lines[i];
+      expect(Math.hypot(Number(m[1]) - C, Number(m[2]) - C)).toBeGreaterThan(Math.hypot((x1 + x2) / 2 - C, (y1 + y2) / 2 - C));
+    });
+  });
+  it('a chord weight goes to the side with more room, away from the nodes', () => {
+    // pentagon A(top) B C D E clockwise; chord B -- E runs under A: its weight must go below the chord, not up next to A
+    const d = renderDiagram('graph', 'A -- B\nB -- C\nC -- D\nD -- E\nB -- E : 9');
+    const [, x1, y1, x2, y2] = [...d.matchAll(/<line class="dg-edge" x1="([\d.-]+)" y1="([\d.-]+)" x2="([\d.-]+)" y2="([\d.-]+)"/g)][4].map(Number);
+    const [, , wy] = /<text class="dg-weight" x="([\d.-]+)" y="([\d.-]+)"/.exec(d)!.map(Number);
+    expect(wy).toBeGreaterThan((y1 + y2) / 2);
+    expect(Math.abs(x1 - x2)).toBeGreaterThan(Math.abs(y1 - y2));
+  });
   it('escapes labels', () => {
     const d = renderDiagram('graph', '<b> -- x');
     expect(d).not.toContain('<b>');
