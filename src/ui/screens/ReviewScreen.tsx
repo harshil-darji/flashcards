@@ -183,7 +183,7 @@ function ReviewSession({ deckId, onEnd }: { deckId?: ID; onEnd: () => void }) {
               ) : (
                 <FilledButton onClick={() => setFlipped(true)}>Show Answer</FilledButton>
               )}
-              <div className="review-gesture-hint">{flipped ? 'Swipe ← Again · → Good · ↑ Easy' : '\u00a0'}</div>
+              <div className="review-gesture-hint">{flipped ? 'Swipe ← Again · → Good · ↑ Easy at end' : '\u00a0'}</div>
             </div>
           </div>
         ) : (
