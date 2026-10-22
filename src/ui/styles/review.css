@@ -1,0 +1,88 @@
+/*
+ * Review session (full screen) + review card text size / code layout.
+ * Loaded by ReviewScreen/ReviewCard after theme.css; overrides theme.css by specificity.
+ */
+
+/* ---------- full-screen session: no tab bar, no nav title ---------- */
+.app.immersive .app-content { padding-bottom: 0; }
+.review-session { display: flex; flex-direction: column; height: 100%; }
+.review-session .review-stage {
+  flex: 1; display: flex; flex-direction: column; min-height: 0; gap: 10px;
+  padding: 0 calc(16px + var(--safe-right)) calc(8px + var(--safe-bottom)) calc(16px + var(--safe-left));
+}
+@media (min-width: 720px) {
+  .review-session .review-topbar, .review-session .review-stage { max-width: 720px; width: 100%; margin: 0 auto; }
+}
+
+.review-topbar {
+  flex: none; display: flex; align-items: center; gap: 10px;
+  padding: calc(var(--safe-top) + 6px) calc(12px + var(--safe-right)) 6px calc(8px + var(--safe-left));
+}
+.review-close {
+  flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 22px;
+  color: var(--label-secondary);
+}
+.review-close:active { opacity: .35; }
+.review-progress { flex: 1; min-width: 0; height: 6px; border-radius: 3px; background: var(--input-bg); overflow: hidden; }
+.review-progress-fill { height: 100%; border-radius: 3px; background: var(--green); transition: width .3s cubic-bezier(.2,.8,.2,1); }
+.review-progress-count {
+  flex: none; min-width: 52px; text-align: right; font-size: 15px; font-weight: 600;
+  font-variant-numeric: tabular-nums; color: var(--label-secondary);
+}
+.review-edit { flex: none; min-height: 44px; padding: 0 2px 0 6px; color: var(--tint); font-size: 17px; }
+.review-edit:active { opacity: .35; }
+
+.review-meta { flex: none; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.review-deck-chip {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 13px; font-weight: 500; color: var(--label-secondary);
+  background: var(--input-bg); border-radius: 12px; padding: 3px 10px;
+}
+.review-state { flex: none; font-size: 12px; font-weight: 600; letter-spacing: .2px; }
+.review-state.new { color: var(--blue); }
+.review-state.learn { color: var(--orange); }
+.review-state.review { color: var(--green); }
+
+.review-session .review-actions { padding-bottom: 0; }
+
+/* ---------- text size (aA) ---------- */
+.review-card { --review-scale: 1; }
+.review-text-size {
+  position: absolute; top: 10px; right: 10px; z-index: 3;
+  min-width: 44px; height: 32px; padding: 0 8px; border-radius: 16px;
+  display: flex; align-items: baseline; justify-content: center; gap: 1px;
+  background: var(--input-bg); color: var(--label-secondary);
+  font-weight: 600; font-size: 17px; line-height: 32px; cursor: pointer;
+}
+.review-text-size .small { font-size: 12px; }
+.review-text-size:active { opacity: .5; }
+/* keep the first line of the card clear of the button */
+.review-card .review-card-body > .review-front { padding-right: 40px; }
+.review-card .review-front { font-size: calc(20px * var(--review-scale)); }
+.review-card .review-back { font-size: calc(17px * var(--review-scale)); }
+.review-card .markdown h1 { font-size: calc(24px * var(--review-scale)); }
+.review-card .markdown h2 { font-size: calc(20px * var(--review-scale)); }
+.review-card .markdown h3 { font-size: calc(17px * var(--review-scale)); }
+.review-card .markdown table { font-size: calc(15px * var(--review-scale)); }
+
+/* ---------- code: never wrap mid-statement; scroll sideways inside the block ---------- */
+.review-card .markdown pre { overflow: hidden; }
+.review-card .review-card-body .markdown pre code.hljs {
+  white-space: pre; overflow-wrap: normal; word-break: normal;
+  font-size: calc(12px * var(--review-scale)); line-height: 1.5;
+  padding: 10px 12px;
+  overflow-x: hidden; /* until measured as too wide (.code-scroll) */
+}
+/*
+ * A wide block becomes its own horizontal scroller. It needs its own touch-action (pan-x, plus pan-y
+ * when the card body scrolls so vertical drags still scroll the card) and contained horizontal
+ * overscroll so a pan at scrollLeft 0 can never chain into the browser's back/forward gesture.
+ */
+.review-card .review-card-body .markdown pre code.hljs.code-scroll {
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+  scrollbar-width: thin;
+}
+.review-card.scrollable .review-card-body .markdown pre code.hljs.code-scroll { touch-action: pan-x pan-y; }
+.review-card .review-card-body .markdown pre code.hljs.code-scroll * { touch-action: inherit; }

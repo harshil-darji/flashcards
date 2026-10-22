@@ -414,6 +414,12 @@ code, pre { font-family: var(--font-mono); font-size: 14px; }
 @keyframes card-in { from { opacity: 0; transform: scale(.96); } }
 .review-card-deck { font-size: 13px; color: var(--label-secondary); margin-bottom: 8px; }
 .review-card-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; min-height: 0; }
+/* Long backs (e.g. Java + Python) scroll inside the card; fade the fold so hidden content is obvious. */
+.review-card-body.more {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 56px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 56px), transparent);
+}
+.review-card-more { flex: none; text-align: center; font-size: 13px; font-weight: 600; color: var(--blue); padding-top: 4px; pointer-events: none; animation: fade .2s; }
 .review-front { font-size: 20px; line-height: 1.35; font-weight: 500; }
 .review-back { font-size: 17px; animation: fade .2s; }
 .review-divider { border: 0; border-top: 0.5px solid var(--separator); margin: 16px 0; }

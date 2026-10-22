@@ -1,13 +1,21 @@
 import { useState } from 'react';
-import type { Deck } from '../../types';
+import type { Deck, ID } from '../../types';
+import type { Progress } from '../../core/progress';
 import type { DeckNode } from '../lib/decks';
 import { ListRow } from './ListRow';
 import { SwipeRow } from './SwipeRow';
 import { CountPills } from './CountPills';
 import { Icon } from './Icon';
+import { DeckRowSubtitle } from './decks/DeckRowSubtitle';
 
 /** Flattened, collapsible deck tree as list rows (swipe left to delete). */
-export function DeckTreeRows({ nodes, onOpen, onDelete }: { nodes: DeckNode[]; onOpen: (d: Deck) => void; onDelete: (d: Deck) => void }) {
+export function DeckTreeRows({ nodes, onOpen, onDelete, progress }: {
+  nodes: DeckNode[];
+  onOpen: (d: Deck) => void;
+  onDelete: (d: Deck) => void;
+  /** Mastery per deck (incl. descendants); shows a progress bar under each row when given. */
+  progress?: Map<ID, Progress>;
+}) {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const toggle = (id: string) =>
     setCollapsed((s) => {
@@ -26,7 +34,7 @@ export function DeckTreeRows({ nodes, onOpen, onDelete }: { nodes: DeckNode[]; o
           <ListRow
             indent={node.depth}
             title={node.deck.name}
-            subtitle={`${node.counts.total} card${node.counts.total === 1 ? '' : 's'}`}
+            subtitle={<DeckRowSubtitle total={node.counts.total} progress={progress?.get(node.deck.id)} />}
             onClick={() => onOpen(node.deck)}
             leading={
               hasKids ? (
