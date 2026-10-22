@@ -8,7 +8,7 @@ Implementation: `src/core/importExport.ts` (`parseCSV`, `parseJSON`, `exportCSV`
 | Field   | Required | Notes |
 |---------|----------|-------|
 | `front` | yes      | Markdown. Must be non-empty. |
-| `back`  | yes      | Markdown (may be empty). Fenced code blocks are highlighted; use ` ```java `. |
+| `back`  | yes      | Markdown (may be empty). Fenced code blocks are highlighted; use ` ```java `. Expandable `:::details` sections and diagram fences: [card-format.md](card-format.md). |
 | `deck`  | no       | Deck path. Nested decks use `::`, e.g. `LeetCode::Two Pointers`. Missing decks (and parents) are auto-created by name. Whitespace around segments is trimmed. Empty → `Default`. |
 | `tags`  | no       | CSV: one field, tags separated by `;`. JSON: array of strings. Trimmed, de-duplicated, empty dropped. |
 

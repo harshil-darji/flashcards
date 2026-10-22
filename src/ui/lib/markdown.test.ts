@@ -27,8 +27,8 @@ const codeBlocks = (html: string) => [...html.matchAll(/<pre><code class="hljs l
 describe('renderMarkdown: back with Java + Python fences', () => {
   it('renders both headings and both highlighted code blocks, in order', () => {
     const html = renderMarkdown(back);
-    expect(html).toContain('<p><strong>Java</strong></p>');
-    expect(html).toContain('<p><strong>Python</strong></p>');
+    expect(html).toContain('<p class="code-label" data-code-lang="java"><strong>Java</strong></p>');
+    expect(html).toContain('<p class="code-label" data-code-lang="python"><strong>Python</strong></p>');
     const blocks = codeBlocks(html);
     expect(blocks.map((b) => b.lang)).toEqual(['java', 'python']);
     expect(blocks[0].body).toContain('hljs-keyword');
