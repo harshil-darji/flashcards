@@ -12,22 +12,32 @@ import { BarButton } from '../components/BarButton';
 import { ListSection } from '../components/ListSection';
 import { ListRow } from '../components/ListRow';
 import { CountPills } from '../components/CountPills';
+import { Icon } from '../components/Icon';
 import { ReviewCard, type SwipeDir } from '../components/ReviewCard';
 import { RatingButtons } from '../components/RatingButtons';
 import { FilledButton } from '../components/FilledButton';
 import { EmptyState } from '../components/EmptyState';
 import { CardEditorSheet, type EditorTarget } from '../components/CardEditorSheet';
+import '../styles/review.css';
 
 /** Cards rated into a short learning step come back in the same session. */
 const LEARN_AHEAD_MS = 20 * 60 * 1000;
 
 type Session = { deckId?: ID } | null;
 
-export default function ReviewScreen({ deckId, startNow, onExit }: { deckId?: ID | null; startNow?: boolean; onExit: () => void }) {
+/** `onImmersive(true)` while a card is on screen: the shell hides the tab bar for a full-screen session. */
+export default function ReviewScreen({ deckId, startNow, onExit, onImmersive }: {
+  deckId?: ID | null;
+  startNow?: boolean;
+  onExit: () => void;
+  onImmersive?: (on: boolean) => void;
+}) {
   const [session, setSession] = useState<Session>(startNow ? { deckId: deckId ?? undefined } : null);
   if (!session) return <ReviewPicker onStart={(id) => setSession({ deckId: id })} />;
-  return <ReviewSession deckId={session.deckId} onEnd={() => { setSession(null); onExit(); }} />;
+  return <ReviewSession deckId={session.deckId} onImmersive={onImmersive} onEnd={() => { setSession(null); onExit(); }} />;
 }
+
+const crumbs = (path: string | undefined) => (path ?? '').split('::').map((s) => s.trim()).filter(Boolean).join(' › ');
 
 function ReviewPicker({ onStart }: { onStart: (deckId?: ID) => void }) {
   const { decks, cards, limits } = useStore();
@@ -58,7 +68,7 @@ function ReviewPicker({ onStart }: { onStart: (deckId?: ID) => void }) {
   );
 }
 
-function ReviewSession({ deckId, onEnd }: { deckId?: ID; onEnd: () => void }) {
+function ReviewSession({ deckId, onEnd, onImmersive }: { deckId?: ID; onEnd: () => void; onImmersive?: (on: boolean) => void }) {
   const { decks, settings, reload } = useStore();
   const [queue, setQueue] = useState<Card[] | null>(null);
   const [flipped, setFlipped] = useState(false);
@@ -143,6 +153,11 @@ function ReviewSession({ deckId, onEnd }: { deckId?: ID; onEnd: () => void }) {
 
   const end = async () => { await reload().catch(() => {}); onEnd(); };
 
+  // Session progress: cards graded so far / (graded + still queued). Learning steps that come back
+  // in this session count again, so the total can grow by a card after an Again.
+  const remaining = queue?.length ?? 0;
+  const total = sessionCount + remaining;
+  const pct = total ? Math.round((sessionCount / total) * 100) : 0;
   const counts = useMemo(() => {
     const q = queue ?? [];
     return {
@@ -151,42 +166,67 @@ function ReviewSession({ deckId, onEnd }: { deckId?: ID; onEnd: () => void }) {
       review: q.filter((c) => c.fsrs.state === State.Review).length,
     };
   }, [queue]);
+  const state = !current ? null
+    : isNew(current) ? { cls: 'new', label: 'New' }
+    : current.fsrs.state === State.Review ? { cls: 'review', label: 'Review' }
+    : { cls: 'learn', label: 'Learning' };
+
+  const immersive = queue === null || !!current;
+  useEffect(() => { onImmersive?.(immersive); }, [immersive, onImmersive]);
+  useEffect(() => () => onImmersive?.(false), [onImmersive]);
 
   return (
     <>
-      <Page
-        title={deck?.name ?? 'All Decks'}
-        largeTitle={false}
-        leading={<BarButton icon="chevron-left" onClick={end}>Review</BarButton>}
-        trailing={current ? <BarButton onClick={() => setEditor({ card: current })}>Edit</BarButton> : undefined}
-      >
-        {error && <div className="form-error">{error}</div>}
-        {queue === null ? (
-          <div className="placeholder">Loading…</div>
-        ) : current ? (
-          <div className="review-stage">
-            <div className="review-counts" aria-label="Remaining">
-              <span className="count new">{counts.fresh}</span>
-              <span className="count learn">{counts.learning}</span>
-              <span className="count due">{counts.review}</span>
+      {immersive ? (
+        <section className="screen review-session" aria-label={`Review: ${deck?.name ?? 'All Decks'}`}>
+          <div className="review-topbar">
+            <button type="button" className="review-close" aria-label="End session" onClick={end}>
+              <Icon name="close" size={24} strokeWidth={2.2} />
+            </button>
+            <div className="review-progress" role="progressbar" aria-label="Session progress"
+              aria-valuemin={0} aria-valuemax={total} aria-valuenow={sessionCount}>
+              <div className="review-progress-fill" style={{ width: `${pct}%` }} />
             </div>
-            <ReviewCard
-              card={current}
-              deckPath={deckId ? undefined : pathById.get(current.deckId)}
-              flipped={flipped}
-              onFlip={() => setFlipped(true)}
-              onSwipe={onSwipe}
-            />
-            <div className="review-actions">
-              {flipped ? (
-                <RatingButtons intervals={intervals} onRate={rate} disabled={busy} />
-              ) : (
-                <FilledButton onClick={() => setFlipped(true)}>Show Answer</FilledButton>
-              )}
-              <div className="review-gesture-hint">{flipped ? 'Swipe ← Again · → Good · ↑ Easy at end' : '\u00a0'}</div>
-            </div>
+            <span className="review-progress-count"
+              aria-label={`${sessionCount} of ${total} done; ${counts.fresh} new, ${counts.learning} learning, ${counts.review} review left`}
+              data-new={counts.fresh} data-learn={counts.learning} data-review={counts.review}>
+              {sessionCount} / {total}
+            </span>
+            {current && <button type="button" className="review-edit" onClick={() => setEditor({ card: current })}>Edit</button>}
           </div>
-        ) : (
+          {error && <div className="form-error">{error}</div>}
+          {!current ? (
+            <div className="placeholder">Loading…</div>
+          ) : (
+            <div className="review-stage">
+              <div className="review-meta">
+                <span className="review-deck-chip" title={pathById.get(current.deckId)}>{crumbs(pathById.get(current.deckId)) || 'Deck'}</span>
+                {state && <span className={`review-state ${state.cls}`}>{state.label}</span>}
+              </div>
+              <ReviewCard
+                card={current}
+                flipped={flipped}
+                onFlip={() => setFlipped(true)}
+                onSwipe={onSwipe}
+              />
+              <div className="review-actions">
+                {flipped ? (
+                  <RatingButtons intervals={intervals} onRate={rate} disabled={busy} />
+                ) : (
+                  <FilledButton onClick={() => setFlipped(true)}>Show Answer</FilledButton>
+                )}
+                <div className="review-gesture-hint">{flipped ? 'Swipe ← Again · → Good · ↑ Easy at end' : '\u00a0'}</div>
+              </div>
+            </div>
+          )}
+        </section>
+      ) : (
+        <Page
+          title={deck?.name ?? 'All Decks'}
+          largeTitle={false}
+          leading={<BarButton icon="chevron-left" onClick={end}>Review</BarButton>}
+        >
+          {error && <div className="form-error">{error}</div>}
           <EmptyState
             icon={<span className="done-check">✓</span>}
             title={sessionCount ? 'Session Complete' : 'All Caught Up'}
@@ -198,8 +238,8 @@ function ReviewSession({ deckId, onEnd }: { deckId?: ID; onEnd: () => void }) {
             }
             action={<FilledButton onClick={end}>Done</FilledButton>}
           />
-        )}
-      </Page>
+        </Page>
+      )}
       <CardEditorSheet
         target={editor}
         onClose={() => {

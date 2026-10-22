@@ -17,6 +17,7 @@ function Shell() {
   const [reviewDeck, setReviewDeck] = useState<ID | null>(null);
   const [autoStart, setAutoStart] = useState(false);
   const [reviewKey, setReviewKey] = useState(0);
+  const [immersive, setImmersive] = useState(false);
   const contentRef = useRef<HTMLElement>(null);
 
   useEffect(() => { contentRef.current?.scrollTo({ top: 0 }); }, [tab, reviewKey]);
@@ -42,7 +43,7 @@ function Shell() {
   };
 
   return (
-    <div className="app">
+    <div className={`app${immersive && tab === 'review' ? ' immersive' : ''}`}>
       <main className="app-content" ref={contentRef}>
         {error && (
           <div className="fatal-banner" role="alert">
@@ -52,13 +53,14 @@ function Shell() {
         )}
         {tab === 'decks' && <DecksScreen onStudy={study} />}
         {tab === 'review' && (
-          <ReviewScreen key={reviewKey} deckId={reviewDeck} startNow={autoStart} onExit={() => { const back = autoStart; setReviewDeck(null); setAutoStart(false); if (back) setTab('decks'); }} />
+          <ReviewScreen key={reviewKey} deckId={reviewDeck} startNow={autoStart} onImmersive={setImmersive} onExit={() => { const back = autoStart; setReviewDeck(null); setAutoStart(false); if (back) setTab('decks'); }} />
         )}
         {tab === 'search' && <SearchScreen />}
         {tab === 'stats' && <StatsScreen />}
         {tab === 'settings' && <SettingsScreen />}
       </main>
-      <TabBar active={tab} onChange={changeTab} badge={{ review: dueBadge }} />
+      {/* Full-screen review: no tab bar while a card is up (✕ in the session's top bar exits). */}
+      {!(immersive && tab === 'review') && <TabBar active={tab} onChange={changeTab} badge={{ review: dueBadge }} />}
     </div>
   );
 }
