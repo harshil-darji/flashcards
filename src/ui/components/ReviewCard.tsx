@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Card } from '../../types';
 import { Markdown } from './Markdown';
+import { CODE_LANG_OPTIONS, codeLangsIn, hiddenLangFor, useCodeLang, type CodeLang } from '../lib/codeLang';
 import '../styles/review.css';
 
 export type SwipeDir = 'left' | 'right' | 'up';
 const THRESHOLD = 90;
+
+/** Card controls (aA, code language) own their taps: never flip, drag or grade. */
+const inControl = (el: EventTarget | null) => el instanceof Element && !!el.closest('.review-ctrl');
 
 const atEnd = (el: HTMLElement | null) => !el || el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
 
@@ -73,8 +77,16 @@ export function ReviewCard({ card, flipped, onFlip, onSwipe }: {
   const tStart = useRef<{ x: number; y: number; atEnd: boolean } | null>(null);
   const tUp = useRef(false);
   // Pointer that started inside a horizontally scrollable code block.
-  const code = useRef<{ el: HTMLElement; left: number; active?: boolean } | null>(null);
+  const codeRef = useRef<{ el: HTMLElement; left: number; active?: boolean } | null>(null);
   const text = useTextSize();
+  const code = useCodeLang();
+  const [langMenu, setLangMenu] = useState(false);
+  const langs = useMemo(() => codeLangsIn(card.front, card.back), [card.front, card.back]);
+  const hasBothLangs = langs.has('java') && langs.has('python');
+  // Code lives on the back, so the picker appears once the card is flipped.
+  const showLangPicker = hasBothLangs && flipped;
+  const hideLang = hiddenLangFor(code.lang, langs);
+  const langLabel = CODE_LANG_OPTIONS.find((o) => o.id === code.lang)?.label ?? 'Java';
 
   useLayoutEffect(() => {
     setD({ x: 0, y: 0 });
@@ -82,7 +94,9 @@ export function ReviewCard({ card, flipped, onFlip, onSwipe }: {
     moved.current = false;
     start.current = null;
     tStart.current = null;
+    setLangMenu(false);
   }, [card.id]);
+  useEffect(() => { if (!flipped) setLangMenu(false); }, [flipped]);
 
   const measure = useCallback(() => {
     const el = bodyRef.current;
@@ -99,7 +113,25 @@ export function ReviewCard({ card, flipped, onFlip, onSwipe }: {
     measure();
   }, [flipped, card.id, measure]);
 
-  useLayoutEffect(() => { measure(); }, [text.scale, measure]);
+  useLayoutEffect(() => { measure(); }, [text.scale, hideLang, measure]);
+
+  // Opening/closing a :::details section changes the content height (not the body's box), so re-measure.
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+    el.addEventListener('toggle', measure, true);
+    return () => el.removeEventListener('toggle', measure, true);
+  }, [measure]);
+
+  // Close the language menu on any tap outside it.
+  useEffect(() => {
+    if (!langMenu) return;
+    const close = (e: Event) => { if (!(e.target instanceof Element && e.target.closest('.review-code-lang-wrap'))) setLangMenu(false); };
+    document.addEventListener('pointerdown', close, true);
+    return () => document.removeEventListener('pointerdown', close, true);
+  }, [langMenu]);
+
+  const pickLang = (l: CodeLang) => { code.setLang(l); setLangMenu(false); };
 
   useLayoutEffect(() => {
     const el = bodyRef.current;
@@ -126,34 +158,35 @@ export function ReviewCard({ card, flipped, onFlip, onSwipe }: {
 
   return (
     <div
-      className={`review-card${flipped ? ' flipped' : ''}${dragging ? ' dragging' : ''}${fly ? ' flying' : ''}${scrollable ? ' scrollable' : ''}`}
+      className={`review-card${showLangPicker ? ' has-lang-picker' : ''}${flipped ? ' flipped' : ''}${dragging ? ' dragging' : ''}${fly ? ' flying' : ''}${scrollable ? ' scrollable' : ''}`}
       style={{ transform, touchAction: scrollable ? 'pan-y' : 'none', ['--review-scale' as string]: text.scale }}
       data-text-size={text.size}
+      data-code-lang={hasBothLangs ? code.lang : undefined}
       onPointerDown={(e) => {
         if (e.pointerType === 'mouse' && e.button !== 0) return;
-        if ((e.target as Element).closest?.('.review-text-size')) return;
+        if (inControl(e.target)) return;
         start.current = { x: e.clientX, y: e.clientY };
         moved.current = false;
         const c = codeScroller(e.target);
-        code.current = c ? { el: c, left: c.scrollLeft } : null;
+        codeRef.current = c ? { el: c, left: c.scrollLeft } : null;
       }}
       onPointerMove={(e) => {
         if (!start.current) return;
         const dx = e.clientX - start.current.x;
         const dy = e.clientY - start.current.y;
         if (!moved.current && Math.hypot(dx, dy) < 8) return;
-        if (code.current) {
+        if (codeRef.current) {
           // Decided on the first real move: a horizontal drag inside a wide code block scrolls the
           // code. Touch: the browser pans it natively (and cancels this pointer). Mouse: by hand.
-          if (!moved.current && !code.current.active) {
-            if (Math.abs(dx) < Math.abs(dy)) code.current = null;
-            else code.current.active = true;
+          if (!moved.current && !codeRef.current.active) {
+            if (Math.abs(dx) < Math.abs(dy)) codeRef.current = null;
+            else codeRef.current.active = true;
           }
-          if (code.current?.active) {
+          if (codeRef.current?.active) {
             moved.current = true;
             if (e.pointerType === 'mouse') {
               (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-              code.current.el.scrollLeft = code.current.left - dx;
+              codeRef.current.el.scrollLeft = codeRef.current.left - dx;
             } else start.current = null;
             return;
           }
@@ -175,8 +208,8 @@ export function ReviewCard({ card, flipped, onFlip, onSwipe }: {
       onPointerUp={() => {
         start.current = null;
         setDragging(false);
-        const wasCode = !!code.current?.active;
-        code.current = null;
+        const wasCode = !!codeRef.current?.active;
+        codeRef.current = null;
         if (wasCode) return;
         if (!moved.current) return;
         if (dir) commit(dir);
@@ -184,13 +217,13 @@ export function ReviewCard({ card, flipped, onFlip, onSwipe }: {
       }}
       onPointerCancel={() => {
         start.current = null;
-        code.current = null;
+        codeRef.current = null;
         setDragging(false);
         // A native vertical scroll took the gesture; keep the pending touch swipe-up preview.
         if (!tUp.current) setD({ x: 0, y: 0 });
       }}
       onTouchStart={(e) => {
-        if (!scrollable || !flipped || e.touches.length !== 1) { tStart.current = null; return; }
+        if (!scrollable || !flipped || e.touches.length !== 1 || inControl(e.target)) { tStart.current = null; return; }
         const t = e.touches[0];
         tStart.current = { x: t.clientX, y: t.clientY, atEnd: atEnd(bodyRef.current) };
         tUp.current = false;
@@ -219,7 +252,9 @@ export function ReviewCard({ card, flipped, onFlip, onSwipe }: {
       }}
       onTouchCancel={() => { tStart.current = null; tUp.current = false; setD({ x: 0, y: 0 }); }}
       onClick={(e) => {
-        if ((e.target as Element).closest?.('.review-text-size')) return;
+        if (inControl(e.target)) return;
+        // Tapping a :::details summary only toggles it (native), even on the front.
+        if ((e.target as Element).closest?.('summary')) { moved.current = false; return; }
         if (!moved.current && !flipped) onFlip();
         moved.current = false;
       }}
@@ -230,7 +265,7 @@ export function ReviewCard({ card, flipped, onFlip, onSwipe }: {
       {dir && <div className={`swipe-hint ${dir}`}>{dir === 'left' ? 'Again' : dir === 'right' ? 'Good' : 'Easy'}</div>}
       <button
         type="button"
-        className="review-text-size"
+        className="review-text-size review-ctrl"
         aria-label={`Text size: ${text.label}. Tap to change.`}
         title={`Text size: ${text.label}`}
         onClick={(e) => { e.stopPropagation(); text.cycle(); }}
@@ -238,6 +273,36 @@ export function ReviewCard({ card, flipped, onFlip, onSwipe }: {
       >
         <span className="small">a</span><span>A</span>
       </button>
+      {showLangPicker && (
+        <div className="review-code-lang-wrap review-ctrl" onKeyDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            className="review-code-lang"
+            aria-haspopup="listbox"
+            aria-expanded={langMenu}
+            aria-label={`Code language: ${langLabel}. Tap to change.`}
+            onClick={() => setLangMenu((o) => !o)}
+          >
+            {langLabel}<span className="review-code-lang-caret" aria-hidden="true">▾</span>
+          </button>
+          {langMenu && (
+            <div className="review-code-lang-menu" role="listbox" aria-label="Code language">
+              {CODE_LANG_OPTIONS.map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  role="option"
+                  aria-selected={o.id === code.lang}
+                  className={`review-code-lang-option${o.id === code.lang ? ' selected' : ''}`}
+                  onClick={() => pickLang(o.id)}
+                >
+                  <span className="check" aria-hidden="true">{o.id === code.lang ? '✓' : ''}</span>{o.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       {/* touch-action must be on the scroll container too: it resets the effective touch-action for its descendants. */}
       <div
         className={`review-card-body${more ? ' more' : ''}`}
@@ -245,11 +310,11 @@ export function ReviewCard({ card, flipped, onFlip, onSwipe }: {
         style={{ touchAction: scrollable ? 'pan-y' : 'none' }}
         onScroll={() => setMore(scrollable && !atEnd(bodyRef.current))}
       >
-        <Markdown source={card.front} className="review-front" />
+        <Markdown source={card.front} className="review-front" hideLang={hideLang} />
         {flipped && (
           <>
             <hr className="review-divider" />
-            <Markdown source={card.back} className="review-back" />
+            <Markdown source={card.back} className="review-back" hideLang={hideLang} />
           </>
         )}
       </div>

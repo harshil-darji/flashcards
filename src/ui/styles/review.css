@@ -86,3 +86,35 @@
 }
 .review-card.scrollable .review-card-body .markdown pre code.hljs.code-scroll { touch-action: pan-x pan-y; }
 .review-card .review-card-body .markdown pre code.hljs.code-scroll * { touch-action: inherit; }
+
+/* ---------- code language picker (left of aA; only on cards with both Java and Python) ---------- */
+.review-code-lang-wrap { position: absolute; top: 10px; right: 62px; z-index: 4; }
+.review-code-lang {
+  height: 32px; padding: 0 10px 0 12px; border-radius: 16px;
+  display: flex; align-items: center; gap: 4px;
+  background: var(--review-ctrl-bg); color: var(--label-secondary);
+  font-weight: 600; font-size: 14px; cursor: pointer;
+}
+.review-code-lang:active { opacity: .5; }
+.review-code-lang-caret { font-size: 11px; }
+.review-code-lang-menu {
+  position: absolute; top: 38px; right: 0; min-width: 140px; padding: 4px 0;
+  background: var(--bg-elevated); border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,.28), 0 0 0 0.5px var(--separator);
+}
+.review-code-lang-option {
+  display: flex; align-items: center; gap: 6px; width: 100%; min-height: 44px; padding: 0 14px 0 10px;
+  text-align: left; font-size: 16px; color: var(--label); background: none;
+}
+.review-code-lang-option + .review-code-lang-option { border-top: 0.5px solid var(--separator); }
+.review-code-lang-option:active { background: var(--row-pressed); }
+.review-code-lang-option .check { width: 18px; color: var(--tint); font-weight: 700; }
+/* first line of the card stays clear of both controls */
+.review-card.has-lang-picker .review-card-body > .review-front { padding-right: 0; }
+.review-card.has-lang-picker .review-card-body > .review-front > :first-child { padding-right: 140px; }
+
+/* details summaries / diagram labels follow the review text size */
+.review-card .markdown details.md-details > summary { font-size: calc(16px * var(--review-scale)); }
+
+/* opaque control chips so scrolled content never shows through them */
+.review-card { --review-ctrl-bg: color-mix(in srgb, var(--label) 11%, var(--bg-elevated)); }
+.review-card .review-text-size { background: var(--review-ctrl-bg); }

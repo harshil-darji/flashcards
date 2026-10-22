@@ -493,3 +493,52 @@ code, pre { font-family: var(--font-mono); font-size: 14px; }
 /* Horizontal scrollers elsewhere must never chain overscroll into browser history navigation. */
 .markdown pre code.hljs, .markdown table, .chip-row { overscroll-behavior-x: contain; }
 .app-content, .sheet-body { overscroll-behavior-x: none; }
+
+/* ---------- markdown: :::details sections ---------- */
+.markdown details.md-details {
+  margin: 0 0 .7em; border-radius: 10px; overflow: hidden;
+  background: color-mix(in srgb, var(--label) 3%, var(--bg-elevated));
+  border: 0.5px solid var(--separator);
+}
+.markdown details.md-details > summary {
+  list-style: none; cursor: pointer; user-select: none; -webkit-user-select: none;
+  display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px;
+  font-weight: 600; color: var(--label);
+}
+.markdown details.md-details > summary::-webkit-details-marker { display: none; }
+.markdown details.md-details > summary::before {
+  content: ''; flex: none; width: 7px; height: 7px; margin: 0 2px 0 1px;
+  border-right: 2px solid var(--tint); border-bottom: 2px solid var(--tint);
+  transform: rotate(-45deg); transition: transform .18s ease;
+}
+.markdown details.md-details[open] > summary::before { transform: rotate(45deg); }
+.markdown details.md-details > summary:active { background: var(--row-pressed); }
+.markdown details.md-details[open] > summary { border-bottom: 0.5px solid var(--separator); }
+.markdown .md-details-body { padding: 10px 12px 2px; }
+.markdown .md-details-body > :last-child { margin-bottom: .7em; }
+
+/* ---------- markdown: diagrams (inline SVG from ```tree/graph/grid/list) ---------- */
+.markdown figure.diagram { margin: 0 0 .7em; text-align: center; }
+.markdown figure.diagram .dg-svg { display: block; margin: 0 auto; max-width: 100%; height: auto; overflow: visible; }
+.markdown figure.diagram figcaption { margin-top: 4px; font-size: .8em; color: var(--label-secondary); }
+.dg-svg .dg-label, .dg-svg .dg-weight, .dg-svg .dg-null {
+  font-family: var(--font-mono); font-size: 13px; text-anchor: middle; dominant-baseline: central; fill: var(--label);
+}
+.dg-svg .dg-weight { font-size: 11px; fill: var(--label-secondary); }
+.dg-svg .dg-null { fill: var(--label-secondary); font-size: 15px; }
+.dg-svg .dg-edge { stroke: var(--label-secondary); stroke-width: 1.6; }
+.dg-svg .dg-cycle { stroke: var(--orange); stroke-dasharray: 4 3; }
+.dg-svg .dg-arrowhead { fill: var(--label-secondary); }
+.dg-svg .dg-node circle, .dg-svg .dg-node rect { fill: var(--bg-elevated); stroke: var(--label-secondary); stroke-width: 1.6; }
+.dg-svg .dg-cell rect { fill: var(--bg-elevated); stroke: var(--separator); stroke-width: 1; }
+.dg-svg .hl circle, .dg-svg .hl rect { fill: color-mix(in srgb, var(--tint) 30%, var(--bg-elevated)); stroke: var(--tint); }
+.dg-svg .hl2 circle, .dg-svg .hl2 rect { fill: color-mix(in srgb, var(--green) 30%, var(--bg-elevated)); stroke: var(--green); }
+.dg-svg .hl3 circle, .dg-svg .hl3 rect { fill: color-mix(in srgb, var(--orange) 32%, var(--bg-elevated)); stroke: var(--orange); }
+.markdown .diagram-error { margin: 0 0 .7em; padding: 8px 10px; border-radius: 10px; border: 1px dashed var(--red); }
+.markdown .diagram-error-title { color: var(--red); font-size: .85em; margin-bottom: 4px; }
+.markdown .diagram-error pre { margin: 0; }
+.markdown .diagram-error pre code { white-space: pre-wrap; font-size: 12px; }
+
+/* ---------- markdown: code language filter (review card picker) ---------- */
+.markdown .code-hidden { display: none !important; }
+.markdown p.code-label { margin-bottom: .35em; }
