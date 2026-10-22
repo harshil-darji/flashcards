@@ -15,6 +15,9 @@ import { ActionSheet } from '../components/ActionSheet';
 import { FilledButton } from '../components/FilledButton';
 import { StatTile } from '../components/StatTile';
 import { Icon } from '../components/Icon';
+import { DeckRowSubtitle } from '../components/decks/DeckRowSubtitle';
+import { ProgressBar } from '../components/decks/ProgressBar';
+import { progressByDeck } from '../components/decks/deckProgress';
 
 export function DeckDetail({ node, backLabel, onBack, onOpenDeck, onStudy, onEditCard, onAddCard, onNewSubdeck, onRename, onDeleteDeck, error }: {
   node: DeckNode;
@@ -36,6 +39,8 @@ export function DeckDetail({ node, backLabel, onBack, onOpenDeck, onStudy, onEdi
     () => cards.filter((c) => c.deckId === node.deck.id).sort((a, b) => a.createdAt - b.createdAt),
     [cards, node.deck.id],
   );
+  const progress = useMemo(() => progressByDeck([node], cards), [node, cards]);
+  const mine = progress.get(node.deck.id);
   const now = Date.now();
   const studyable = node.counts.due + node.counts.fresh;
 
@@ -62,6 +67,15 @@ export function DeckDetail({ node, backLabel, onBack, onOpenDeck, onStudy, onEdi
           <StatTile label="Due" value={node.counts.due} color="var(--green)" />
           <StatTile label="Total" value={node.counts.total} />
         </div>
+        {mine && mine.total > 0 && (
+          <div className="deck-mastery">
+            <div className="deck-mastery-text">
+              <span>{mine.mastered} of {mine.total} mastered</span>
+              <span>{mine.pct}%</span>
+            </div>
+            <ProgressBar p={mine} tall />
+          </div>
+        )}
         <div className="page-actions">
           <FilledButton onClick={onStudy} disabled={studyable === 0}>
             {studyable ? 'Study Now' : 'Nothing Due'}
@@ -69,19 +83,19 @@ export function DeckDetail({ node, backLabel, onBack, onOpenDeck, onStudy, onEdi
         </div>
 
         {node.children.length > 0 && (
-          <ListSection header="Sub-decks">
+          <div className="deck-list"><ListSection header="Sub-decks">
             {node.children.map((ch) => (
               <SwipeRow key={ch.deck.id} onDelete={() => onDeleteDeck(ch.deck)}>
                 <ListRow
                   title={ch.deck.name}
-                  subtitle={`${ch.counts.total} card${ch.counts.total === 1 ? '' : 's'}`}
+                  subtitle={<DeckRowSubtitle total={ch.counts.total} progress={progress.get(ch.deck.id)} />}
                   accessory={<CountPills fresh={ch.counts.fresh} due={ch.counts.due} />}
                   chevron
                   onClick={() => onOpenDeck(ch.deck)}
                 />
               </SwipeRow>
             ))}
-          </ListSection>
+          </ListSection></div>
         )}
 
         <ListSection header={`Cards (${own.length})`} footer={own.length ? 'Tap to edit. Swipe left to delete.' : undefined}>

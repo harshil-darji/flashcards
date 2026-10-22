@@ -15,12 +15,18 @@ import { CardEditorSheet, type EditorTarget } from '../components/CardEditorShee
 import { EmptyState } from '../components/EmptyState';
 import { FilledButton } from '../components/FilledButton';
 import { DeckDetail } from './DeckDetail';
+import { STUDY_PLANS, planProgress } from '../../core/plans';
+import { progressByDeck } from '../components/decks/deckProgress';
+import { PlanCard } from '../components/decks/PlanCard';
+import { PlanView } from '../components/decks/PlanView';
+import '../styles/decks.css';
 
 type Prompt = { kind: 'create'; parent: Deck | null } | { kind: 'rename'; deck: Deck } | null;
 
 export default function DecksScreen({ onStudy }: { onStudy: (deckId?: ID) => void }) {
   const { decks, cards, reload, ready, limits } = useStore();
   const [openId, setOpenId] = useState<ID | null>(null);
+  const [planId, setPlanId] = useState<string | null>(null);
   const [addMenu, setAddMenu] = useState(false);
   const [prompt, setPrompt] = useState<Prompt>(null);
   const [toDelete, setToDelete] = useState<Deck | null>(null);
@@ -29,6 +35,12 @@ export default function DecksScreen({ onStudy }: { onStudy: (deckId?: ID) => voi
 
   const tree = useMemo(() => buildTree(decks, cards, Date.now(), limits), [decks, cards, limits]);
   const openNode = openId ? findNode(tree, openId) : undefined;
+  const progress = useMemo(() => progressByDeck(tree, cards), [tree, cards]);
+  const plans = useMemo(
+    () => STUDY_PLANS.map((p) => planProgress(p, cards, decks)).filter((s) => s.overall.total > 0),
+    [cards, decks],
+  );
+  const openPlan = planId ? plans.find((s) => s.plan.id === planId) : undefined;
 
   const run = async (fn: () => Promise<unknown>) => {
     setError(null);
@@ -82,6 +94,10 @@ export default function DecksScreen({ onStudy }: { onStudy: (deckId?: ID) => voi
     </>
   );
 
+  if (openPlan && !openNode) {
+    return <PlanView summary={openPlan} tree={tree} onBack={() => setPlanId(null)} onStudy={(id) => onStudy(id)} />;
+  }
+
   if (openNode) {
     const parent = openNode.deck.parentId ? decks.find((d) => d.id === openNode.deck.parentId) : undefined;
     return (
@@ -117,9 +133,20 @@ export default function DecksScreen({ onStudy }: { onStudy: (deckId?: ID) => voi
           />
         ) : (
           <>
-            <ListSection footer={tree.length ? 'Blue: new · Green: due. Swipe left to delete.' : undefined}>
-              <DeckTreeRows nodes={tree} onOpen={(d) => setOpenId(d.id)} onDelete={confirmDelete} />
-            </ListSection>
+            {plans.length > 0 && (
+              <div className="list-section plan-section">
+                <div className="list-header">Study Plans</div>
+                {plans.map((s) => <PlanCard key={s.plan.id} summary={s} onOpen={() => setPlanId(s.plan.id)} />)}
+              </div>
+            )}
+            <div className="deck-list">
+              <ListSection
+                header={plans.length > 0 ? 'Decks' : undefined}
+                footer={tree.length ? 'New: unseen cards available today · Due: reviews due now. Bar: mastered (21+ day stability). Swipe left to delete.' : undefined}
+              >
+                <DeckTreeRows nodes={tree} progress={progress} onOpen={(d) => setOpenId(d.id)} onDelete={confirmDelete} />
+              </ListSection>
+            </div>
             {tree.length > 0 && (
               <div className="page-actions">
                 <FilledButton onClick={() => onStudy()}>Study All Due</FilledButton>
